@@ -6,7 +6,15 @@ Console.OutputEncoding = Encoding.UTF8;
 try
 {
     string operation = args.FirstOrDefault() ?? "query";
-    if (operation is not ("scan" or "query" or "exercise" or "set")) throw new ArgumentException("Use scan, query, exercise, or set <gear> <rpm> <rgb:on|off> <light:on|off>.");
+    if (operation == "thermal")
+    {
+        using var sensor = new TemperatureMonitor();
+        var reading = sensor.Read();
+        Console.WriteLine(reading.Cpu is { } cpu ? $"CPU={cpu.Celsius:F1} C, source={cpu.Source}" : reading.CpuStatus);
+        Console.WriteLine(reading.Gpu is { } gpu ? $"GPU={gpu.Celsius:F1} C, source={gpu.Source}, captured={gpu.CapturedAt:O}" : reading.GpuStatus);
+        return reading.Gpu == null ? 1 : 0;
+    }
+    if (operation is not ("scan" or "query" or "exercise" or "set" or "auto-exercise")) throw new ArgumentException("Use scan, query, thermal, auto-exercise, exercise, or set.");
     var devices = NativeHid.Enumerate();
     foreach (var item in devices)
         Console.WriteLine($"{item.Product}: 37D7:1002 usage={item.UsagePage:X4}:{item.Usage} input={item.InputLength} output={item.OutputLength} supported={item.IsSupported}");
@@ -23,6 +31,32 @@ try
     var status = connection.LatestStatus;
     Console.WriteLine(status == null ? "No heartbeat observed." : $"Heartbeat: gear={status.Gear} max={status.MaximumRpm} power={status.PowerMode} smart={status.IsSmart} rgb={status.RgbEnabled} gearLight={status.GearLightEnabled}");
     if (operation == "query") return 0;
+    if (operation == "auto-exercise")
+    {
+        if (status == null || status.IsSmart) throw new InvalidOperationException("Automatic exercise requires a manual-mode baseline.");
+        using var sensor = new NvidiaTemperatureReader();
+        var gpu = sensor.Read() ?? throw new IOException(sensor.Status);
+        var decision = new ThermalControl().Evaluate(new(null, gpu, "not used", sensor.Status), TemperatureScope.GpuOnly, CoolingPreset.Performance, status.MaximumRpm, DateTimeOffset.Now);
+        try
+        {
+            await connection.EnterAutomaticAsync();
+            await connection.SetAutomaticRpmAsync(decision.Rpm);
+            var applied = await connection.ReadRpmAsync();
+            Console.WriteLine($"AUTOMATIC: measured GPU={gpu.Celsius} C -> recommended={decision.Rpm}, target={applied.TargetRpm}, actual={applied.ActualRpm}");
+            if (applied.TargetRpm != decision.Rpm) throw new IOException("Automatic target was not applied.");
+        }
+        finally
+        {
+            await connection.ExitAutomaticAsync();
+            await Task.Delay(300);
+            var restored = await connection.ReadRpmAsync();
+            if (restored.TargetRpm != speed.TargetRpm) await connection.SetManualAsync(status.Gear, speed.TargetRpm);
+            var saved = Bs2Protocol.ParseGearSpeeds(await connection.SendAsync(Bs2Protocol.Query(Bs2Command.GearSpeeds)));
+            if (!saved.SequenceEqual(gears)) throw new IOException("Automatic control changed stored gear speeds.");
+            Console.WriteLine($"RESTORED: target={(await connection.ReadRpmAsync()).TargetRpm}, all four gear presets unchanged.");
+        }
+        return 0;
+    }
     if (operation == "set")
     {
         if (args.Length != 5 || !int.TryParse(args[1], out int gear) || !int.TryParse(args[2], out int rpm)

@@ -20,12 +20,14 @@ public partial class MainWindow : Window
     private bool _busy;
     private bool _polling;
     private bool _closing;
+    private bool _closeReady;
     private bool _draftInitialized;
     private int _failures;
 
     public MainWindow()
     {
         InitializeComponent();
+        InitializeTemperatureMonitoring();
         _timer.Tick += async (_, _) =>
         {
             if (_busy || _polling || _closing) return;
@@ -86,6 +88,7 @@ public partial class MainWindow : Window
                 ShowSpeed(speed);
                 if (connection.LatestStatus is { } status) ShowStatus(status);
                 _failures = 0;
+                if (_automatic) await AutomaticStepAsync();
             }
         }
         catch (Exception ex)
@@ -118,7 +121,7 @@ public partial class MainWindow : Window
         SliderMaximum.Text = status.MaximumRpm.ToString(CultureInfo.InvariantCulture);
         PowerText.Text = status.PowerDescription;
         MaximumText.Text = $"최대 {status.MaximumRpm:N0} RPM";
-        ModeText.Text = status.IsShutdown ? "장치 전원이 꺼져 있습니다" : status.IsSmart ? "현재 스마트 모드 · 적용하면 수동 모드로 전환" : $"현재 {status.Gear}단 · 수동 모드";
+        ModeText.Text = _automatic ? "온도 기반 자동 제어 중" : status.IsShutdown ? "장치 전원이 꺼져 있습니다" : status.IsSmart ? "현재 스마트 모드 · 적용하면 수동 모드로 전환" : $"현재 {status.Gear}단 · 수동 모드";
         RgbButton.Content = status.RgbEnabled ? "켜짐 · 끄기" : "꺼짐 · 켜기";
         GearLightButton.Content = status.GearLightEnabled ? "켜짐 · 끄기" : "꺼짐 · 켜기";
         if (!_draftInitialized)
@@ -135,6 +138,9 @@ public partial class MainWindow : Window
     {
         var connection = _connection;
         _connection = null;
+        _automatic = false;
+        _beforeAutomatic = null;
+        AutoState.Text = "USB 연결 끊김 · 자동 제어 중지";
         _status = null;
         _draftInitialized = false;
         if (connection != null) await connection.DisposeAsync();
@@ -152,18 +158,19 @@ public partial class MainWindow : Window
     {
         bool live = _connection != null && _status != null && DateTimeOffset.Now - _status.ReceivedAt < TimeSpan.FromSeconds(6);
         bool enabled = live && _status?.IsShutdown == false && !_busy && !_closing;
-        ApplyButton.IsEnabled = enabled;
+        ApplyButton.IsEnabled = enabled && !_automatic;
         RgbButton.IsEnabled = enabled;
         GearLightButton.IsEnabled = enabled;
-        RpmSlider.IsEnabled = enabled;
-        RpmInput.IsEnabled = enabled;
+        RpmSlider.IsEnabled = enabled && !_automatic;
+        RpmInput.IsEnabled = enabled && !_automatic;
         RefreshButton.IsEnabled = !_busy && !_closing;
         foreach (var button in new[] { Gear1, Gear2, Gear3, Gear4 })
         {
-            button.IsEnabled = enabled;
+            button.IsEnabled = enabled && !_automatic;
             button.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(button.Tag.ToString() == _selectedGear.ToString() ? "#356858" : "#2A3B52"));
         }
         ApplyButton.Content = $"{_selectedGear}단 · 속도 적용";
+        UpdateAutomaticControls(live && _status?.IsShutdown == false);
     }
 
     private void OnGearClick(object sender, RoutedEventArgs e)
@@ -217,15 +224,34 @@ public partial class MainWindow : Window
     }
     private async void OnRefreshClick(object sender, RoutedEventArgs e)
     {
-        if (_busy) return;
-        await DisconnectAsync("다시 연결하고 있습니다…");
+        if (_busy || _closing) return;
+        _busy = true; UpdateControls();
+        try
+        {
+            if (_automatic) await StopAutomaticAsync();
+            await DisconnectAsync("다시 연결하고 있습니다…");
+        }
+        catch (Exception ex) { StatusText.Text = ex.Message; return; }
+        finally { _busy = false; UpdateControls(); }
         await ConnectAsync();
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
+        if (_closeReady) return;
+        e.Cancel = true;
         if (_closing) return;
-        e.Cancel = true; _closing = true; _timer.Stop(); UpdateControls();
+        _closing = true; _timer.Stop(); UpdateControls();
+        _temperatureTimer.Stop();
+        // A start action may still be entering smart mode. Let it finish before restoring.
+        while (_busy || _polling) await Task.Delay(25);
+        if (_automatic)
+        {
+            try { await StopAutomaticAsync(); } catch { /* Disconnected hardware cannot be restored. */ }
+        }
+        while (_readingTemperatures) await Task.Delay(25);
+        _temperatureMonitor.Dispose();
         if (_connection != null) await _connection.DisposeAsync();
+        _closeReady = true;
         Close();
     }
 }

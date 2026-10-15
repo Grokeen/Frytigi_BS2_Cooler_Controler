@@ -54,7 +54,75 @@ Run("Device refusal must be an error", () =>
     Throws<IOException>(() => Bs2Protocol.RequireSuccess(new(0x26, [0]), Bs2Command.SetGear));
     Throws<IOException>(() => Bs2Protocol.RequireSuccess(new(0x26, [2]), Bs2Command.SetGear));
 });
-Console.WriteLine($"PASS: {passed} protocol tests. No device or manufacturer libraries used.");
+var thermalNow = DateTimeOffset.UtcNow;
+TemperatureReading Reading(double value, int age = 0) => new(value, "test fixture", thermalNow.AddSeconds(-age));
+TemperatureSnapshot Sample(double? cpu, double? gpu) => new(cpu.HasValue ? Reading(cpu.Value) : null, gpu.HasValue ? Reading(gpu.Value) : null, "test", "test");
+CoolingDecision Decide(ThermalControl control, double? cpu, double? gpu, int max = 2700, TemperatureScope scope = TemperatureScope.GpuOnly, CoolingPreset preset = CoolingPreset.Performance) => control.Evaluate(Sample(cpu, gpu), scope, preset, max, thermalNow);
+Run("Auto uses higher CPU/GPU temperature", () => Equal(3500, Decide(new(), 80, 45, 4000, TemperatureScope.CpuAndGpu).Rpm));
+Run("GPU-only scope does not invent a CPU reading", () => Equal(1700, Decide(new(), null, 45).Rpm));
+Run("Missing required CPU enters maximum-RPM fail-safe", () =>
+{
+    var decision = Decide(new(), null, 45, 3300, TemperatureScope.CpuAndGpu);
+    Equal(3300, decision.Rpm); Equal(true, decision.FailSafe); Equal<double?>(null, decision.Temperature);
+});
+Run("Missing GPU enters fail-safe", () => Equal(true, Decide(new(), 40, null).FailSafe));
+Run("Invalid temperatures never select quiet speed", () =>
+{
+    foreach (double invalid in new[] { 0d, -1, 126, double.NaN, double.PositiveInfinity }) Equal(2700, Decide(new(), null, invalid).Rpm);
+});
+Run("Stale and future samples fail safe", () =>
+{
+    foreach (int age in new[] { 9, -3 })
+        Equal(true, new ThermalControl().Evaluate(new(null, Reading(40, age), "", ""), TemperatureScope.GpuOnly, CoolingPreset.Quiet, 2700, thermalNow).FailSafe);
+});
+Run("Power supply caps every automatic curve", () =>
+{
+    foreach (int maximum in new[] { 2700, 3300, 4000 })
+        foreach (double value in new[] { 10d, 40, 50, 60, 70, 80, 100 })
+        {
+            var rpm = Decide(new(), null, value, maximum).Rpm;
+            if (rpm < 1300 || rpm > maximum) throw new Exception("Automatic RPM exceeded supply bounds.");
+        }
+});
+Run("Cooling hysteresis avoids threshold chatter", () =>
+{
+    var control = new ThermalControl();
+    Equal(2700, Decide(control, null, 70).Rpm);
+    Equal(2700, Decide(control, null, 69).Rpm);
+    Equal(2700, Decide(control, null, 68).Rpm);
+    Equal(2400, Decide(control, null, 67).Rpm);
+});
+Run("Heating response is immediate", () =>
+{
+    var control = new ThermalControl(); Decide(control, null, 40);
+    Equal(2700, Decide(control, null, 75).Rpm);
+});
+Run("Critical temperature has recovery hysteresis", () =>
+{
+    var control = new ThermalControl();
+    Equal(4000, Decide(control, null, 90, 4000, preset: CoolingPreset.Quiet).Rpm);
+    Equal(4000, Decide(control, null, 88, 4000, preset: CoolingPreset.Quiet).Rpm);
+    Equal(3000, Decide(control, null, 86, 4000, preset: CoolingPreset.Quiet).Rpm);
+});
+Run("Quiet and performance profiles differ", () =>
+{
+    Equal(1300, Decide(new(), null, 40, 2700, preset: CoolingPreset.Quiet).Rpm);
+    Equal(1700, Decide(new(), null, 40, 2700, preset: CoolingPreset.Performance).Rpm);
+});
+Run("Automatic RPM command remains bounded", () =>
+{
+    Equal((byte)0x21, Bs2Protocol.SetAutomaticRpm(1700, 2700)[3]);
+    Throws<ArgumentOutOfRangeException>(() => Bs2Protocol.SetAutomaticRpm(4000, 2700));
+});
+Run("Intel temperature decode validates hardware flags and target", () =>
+{
+    Equal(true, IntelThermalDecoder.TryDecode(100UL << 16, (1UL << 31) | (45UL << 16), out double temperature));
+    Equal(55d, temperature);
+    Equal(false, IntelThermalDecoder.TryDecode(100UL << 16, 45UL << 16, out _));
+    Equal(false, IntelThermalDecoder.TryDecode(0, 1UL << 31, out _));
+    Equal(false, IntelThermalDecoder.TryDecode(100UL << 16, (1UL << 31) | (127UL << 16), out _));
+});
+Console.WriteLine($"PASS: {passed} protocol/thermal tests. No device or manufacturer libraries used.");
 return;
 
 void Run(string name, Action test) { test(); passed++; Console.WriteLine("PASS " + name); }

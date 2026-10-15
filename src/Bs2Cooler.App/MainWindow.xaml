@@ -1,6 +1,6 @@
 <Window x:Class="Bs2Cooler.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="BS2 Cooler"
-        Width="810" Height="730" MinWidth="710" MinHeight="710" Background="#0E1622"
+        Width="850" Height="800" MinWidth="760" MinHeight="780" Background="#0E1622"
         Foreground="#EDF4FF" FontFamily="Malgun Gothic, Segoe UI" FontSize="13"
         WindowStartupLocation="CenterScreen" Loaded="OnLoaded" Closing="OnClosing">
   <Grid Margin="28,24">
@@ -29,10 +29,10 @@
       </Grid>
     </Border>
     <Grid Grid.Row="2">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="230" /></Grid.ColumnDefinitions>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="250" /></Grid.ColumnDefinitions>
       <Border x:Name="ManualPanel" Background="{StaticResource Panel}" CornerRadius="12" Padding="22">
-        <StackPanel>
-          <TextBlock Text="팬 속도 설정" FontSize="18" FontWeight="SemiBold" />
+        <TabControl x:Name="ControlTabs" Background="Transparent" BorderThickness="0">
+          <TabItem Header="수동 제어"><StackPanel Margin="0,14,0,0">
           <TextBlock x:Name="ModeText" Text="장치 연결 후 설정할 수 있습니다" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,7,0,20" />
           <UniformGrid Columns="4" Margin="0,0,0,20">
             <Button x:Name="Gear1" Content="1단" Tag="1" Click="OnGearClick" Margin="0,0,6,0" />
@@ -50,14 +50,36 @@
             <TextBlock x:Name="SliderMaximum" Text="2700" Foreground="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Right" /></DockPanel>
           <Button x:Name="ApplyButton" Content="2단 · 속도 적용" Click="OnApplyClick" Background="#55CBB0" Foreground="#082D27" FontWeight="Bold" Margin="0,23,0,0" />
           <TextBlock x:Name="ApplyNote" Text="설정값은 적용 버튼을 누를 때 전송됩니다." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap" />
-        </StackPanel>
+          </StackPanel></TabItem>
+          <TabItem Header="온도 자동"><StackPanel Margin="0,14,0,0">
+            <TextBlock Text="제어 기준" Foreground="{StaticResource Muted}" Margin="0,0,0,6" />
+            <ComboBox x:Name="TemperatureSource" SelectedIndex="1" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
+              <ComboBoxItem><TextBlock Text="CPU / GPU 중 더 높은 온도" Foreground="#172332" /></ComboBoxItem>
+              <ComboBoxItem><TextBlock Text="GPU 온도만" Foreground="#172332" /></ComboBoxItem>
+            </ComboBox>
+            <TextBlock Text="냉각 곡선" Foreground="{StaticResource Muted}" Margin="0,16,0,6" />
+            <ComboBox x:Name="CurvePreset" SelectedIndex="0" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
+              <ComboBoxItem><TextBlock Text="성능 · 온도 상승에 빠르게 반응" Foreground="#172332" /></ComboBoxItem>
+              <ComboBoxItem><TextBlock Text="저소음 · 낮은 온도에서 조용하게" Foreground="#172332" /></ComboBoxItem>
+            </ComboBox>
+            <TextBlock x:Name="AutoState" Text="온도 센서를 확인하고 있습니다." TextWrapping="Wrap" Foreground="#8BE5CA" Margin="0,20,0,0" MinHeight="42" />
+            <Button x:Name="AutoButton" Content="자동 제어 시작" Click="OnAutomaticClick" Background="#55CBB0" Foreground="#082D27" FontWeight="Bold" Margin="0,12,0,0" />
+            <TextBlock Text="90°C 이상 또는 센서 이상 시 최대 풍량. 중지하면 이전 설정을 복원합니다." Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0" />
+          </StackPanel></TabItem>
+        </TabControl>
       </Border>
       <Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="12" Padding="21">
         <StackPanel>
-          <TextBlock Text="조명" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,19" />
+          <TextBlock Text="컴퓨터 온도" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+          <UniformGrid Columns="2">
+            <StackPanel><TextBlock Text="CPU" Foreground="{StaticResource Muted}" FontSize="11" /><TextBlock x:Name="CpuTemperature" Text="—" FontSize="25" Margin="0,5,0,0" /></StackPanel>
+            <StackPanel><TextBlock Text="GPU" Foreground="{StaticResource Muted}" FontSize="11" /><TextBlock x:Name="GpuTemperature" Text="—" FontSize="25" Margin="0,5,0,0" /></StackPanel>
+          </UniformGrid>
+          <TextBlock x:Name="SensorDescription" Text="온도 센서 확인 중" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0" />
+          <Border Height="1" Background="#2C3C50" Margin="0,16,0,16" />
           <TextBlock Text="RGB 조명" Foreground="{StaticResource Muted}" Margin="0,0,0,8" />
           <Button x:Name="RgbButton" Content="확인 중" Click="OnRgbClick" HorizontalContentAlignment="Left" />
-          <TextBlock Text="단계 표시등" Foreground="{StaticResource Muted}" Margin="0,21,0,8" />
+          <TextBlock Text="단계 표시등" Foreground="{StaticResource Muted}" Margin="0,15,0,8" />
           <Button x:Name="GearLightButton" Content="확인 중" Click="OnGearLightClick" />
           <Border Height="1" Background="#2C3C50" Margin="0,23,0,16" />
           <TextBlock x:Name="FirmwareText" Text="펌웨어 —" Foreground="{StaticResource Muted}" FontSize="11" />

@@ -6,7 +6,9 @@ namespace Bs2Cooler.Core;
 public enum Bs2Command : byte
 {
     Firmware = 0x01,
+    SetAutomaticRpm = 0x21,
     Rpm = 0x22,
+    EnterSmart = 0x23,
     ExitSmart = 0x24,
     FanMode = 0x25,
     SetGear = 0x26,
@@ -46,6 +48,12 @@ public static class Bs2Protocol
     };
 
     public static byte[] ExitSmart() => Encode(Bs2Command.ExitSmart, []);
+    public static byte[] EnterSmart() => Encode(Bs2Command.EnterSmart, []);
+    public static byte[] SetAutomaticRpm(int rpm, int maximumRpm)
+    {
+        ValidateRpm(rpm, maximumRpm);
+        return Encode(Bs2Command.SetAutomaticRpm, [(byte)rpm, (byte)(rpm >> 8)]);
+    }
     public static byte[] Rgb(bool enabled) => Encode(Bs2Command.SetRgb, [(byte)(enabled ? 1 : 0)]);
     public static byte[] GearLight(bool enabled) => Encode(Bs2Command.SetGearLight, [(byte)(enabled ? 1 : 0)]);
 
@@ -124,7 +132,7 @@ public static class Bs2Protocol
     public static void RequireSuccess(Bs2Frame frame, Bs2Command command)
     {
         Require(frame, command, 1);
-        if (frame.Payload[0] != 1 && !(command == Bs2Command.ExitSmart && frame.Payload[0] == 2))
+        if (frame.Payload[0] != 1 && !(command is Bs2Command.ExitSmart or Bs2Command.EnterSmart && frame.Payload[0] == 2))
             throw new IOException($"장치가 명령 0x{(byte)command:X2}을 거부했습니다 (응답 {frame.Payload[0]}).");
     }
 

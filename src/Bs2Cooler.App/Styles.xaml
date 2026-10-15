@@ -16,6 +16,20 @@
         </ControlTemplate.Triggers>
       </ControlTemplate></Setter.Value></Setter>
     </Style>
+    <Style TargetType="TabControl">
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabControl">
+        <DockPanel><TabPanel DockPanel.Dock="Top" IsItemsHost="True" />
+          <ContentPresenter ContentSource="SelectedContent" />
+        </DockPanel>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="TabItem">
+      <Setter Property="Foreground" Value="#EDF4FF" /><Setter Property="Background" Value="#2A3B52" />
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
+        <Border x:Name="TabSurface" Background="{TemplateBinding Background}" CornerRadius="7" Padding="16,9" Margin="0,0,8,0"><ContentPresenter ContentSource="Header" /></Border>
+        <ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="TabSurface" Property="Background" Value="#356858" /></Trigger></ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
     <Style TargetType="TextBox">
       <Setter Property="Foreground" Value="#EDF4FF" /><Setter Property="Background" Value="#101824" />
       <Setter Property="BorderBrush" Value="#42536C" /><Setter Property="Padding" Value="10,7" />

@@ -1,0 +1,23 @@
+BS2 Cooler 0.2.0 - third-party notices
+
+PawnIO.Modules / IntelMSR signed module, version 0.2.11
+Copyright (C) 2025 namazso and upstream contributors.
+License: LGPL-2.1-or-later, as supplied in the module source.
+Official source: https://github.com/namazso/PawnIO.Modules/tree/0.2.11
+Official release: https://github.com/namazso/PawnIO.Modules/releases/tag/0.2.11
+Binary SHA-256: D6ED85D65AB17A22F813EF98207D6D537155EE2DED5976A21CB48413C9B92E5F
+
+The unmodified signed IntelMSR.bin is embedded in Bs2Cooler.Windows.
+Corresponding IntelMSR.p, include files, upstream README and COPYING are
+provided in third_party/PawnIO.Modules/0.2.11 in the repository and package.
+Rebuild Bs2Cooler.sln to replace the embedded module with another module.
+The Pawn compiler and SDK build information are described by upstream.
+
+This application does not install or start the PawnIO kernel driver.
+CPU sensing is optional and requires a separately configured official signed
+PawnIO driver. This application only calls the temperature-related read-MSR
+path; it does not expose write-MSR functions.
+
+NVIDIA NVML is not redistributed. GPU sensing uses nvml.dll from the NVIDIA
+display driver already installed in Windows System32. No NVIDIA driver or
+installer is bundled or installed by this application.

@@ -120,3 +120,61 @@ QC/PD 전원의 고속 회전, 스마트 모드 해제, 케이블 분리/절전 
 - 제외: 제조사 추출 자료, 원시 진단 로그, 로컬 EXE/ZIP, `bin/obj`는 커밋에 포함하지 않음.
 - 기록 정정: 앞선 '아직 커밋하지 않았다' 및 '업로드 준비'는 당시 상태다. 이 기록 시점에는 최초 소스/보고서 업로드가 완료됨.
 - 이 업로드 결과 기록은 후속 문서 커밋으로 원격에 추가 반영한다. 동일 작업 내 보고서 보충이며 앱 코드는 바뀌지 않아 추가 빌드/실기 시험은 반복하지 않음.
+
+## 2026-10-16 01:24:17 KST — 온도 기반 자동 제어 0.2.0 구현 및 검증
+
+- 요청: 원본에 있던 PC 발열 감지 및 쿨러 풍량 자동 조절 기능도 분석해 독립 앱에 구현.
+- 결과: BS2 Cooler **0.2.0**에 온도 자동 탭, CPU/GPU 온도 표시, 성능/저소음 곡선, 자동 시작/중지와 기존 설정 복원을 추가. 앞부분의 0.1.0 기능/제한 기록은 당시 이력이며 현재 버전은 이 기록을 따른다.
+- 원본 분석: 기존 분석 사본의 `IntelligentCoolingService.Services.TemperatureMonitor`, `IntelligentCoolingService`, `TemperatureData`, 쿨러 저장소 및 전원별 곡선 설정을 읽음. CPU/GPU 중 높은 온도에 단계형 곡선을 적용하고 PC에서 목표 RPM을 보내는 구조를 확인. 원본의 LibreHardwareMonitor/PawnIO 의존성과 CPU Package/GPU Core 센서 선택도 확인. 이번 분석에서 제조사 EXE/DLL/드라이버를 실행하지 않음.
+- 통신 확인: 자동 진입 `0x23` → 임시 RPM `0x21` → 자동 종료 `0x24`. 수동 모드에서 거부됐던 `0x21`이 자동 모드에서는 성공함을 실물로 확인. 자동 제어 루프는 수동 저장 명령 `0x26`을 반복 사용하지 않음.
+
+### 변경 파일과 동작
+
+| 파일/영역 | 변경 내용 |
+| --- | --- |
+| `src/Bs2Cooler.Core/ThermalControl.cs` | 유효 온도 확인, 전원별 곡선, 높은 CPU/GPU 선택, 하강 시 2°C 여유, 90°C 고온 최대 풍량 및 87°C 미만 해제 |
+| `src/Bs2Cooler.Core/Bs2Protocol.cs`, `src/Bs2Cooler.Windows/Bs2Connection.cs` | 자동 모드 진입 확인, 전원 상한 내 임시 RPM 전송, 자동 종료 |
+| `src/Bs2Cooler.Windows/*Temperature*.cs` | 기존 NVIDIA NVML에서 GPU 온도 수집, 별도 구성된 PawnIO가 있을 때만 Intel CPU Package 읽기 |
+| `src/Bs2Cooler.App/MainWindow.Automatic.cs`, 화면/스타일 | 약 2초 온도 수집, 자동 제어 상태와 센서 표시, 수동 속도 조작 차단, 중지/정상 종료 시 복원 |
+| `src/Bs2Cooler.App/MainWindow.xaml.cs` | 자동 시작/재연결 작업 중 종료 요청이 오면 해당 작업이 끝난 뒤 복원/종료하도록 처리 |
+| `tests/Bs2Cooler.Tests`, 진단/UI 도구 | 온도 정책·경계값 테스트 및 실물 자동 시작/중지/복원 검증 추가 |
+| `third_party/PawnIO.Modules/0.2.11`, `THIRD_PARTY_NOTICES.txt` | 공식 서명 IntelMSR 모듈과 대응 소스·LGPL 고지 포함 |
+| `tools/Publish-App.ps1`, README, 사용 설명서, 자동 제어 문서 | EXE/ZIP 생성에 고지와 모듈 소스 포함, 사용 방법 및 현재 제한 명시 |
+
+센서 값이 없거나 비정상/8초 초과이면 0°C로 계산하지 않고 현재 전원에서 허용하는 최대 RPM을 선택한다.
+CPU/GPU 기준은 두 센서가 모두 유효해야 시작하며, GPU만 사용할 때는 화면에 별도 기준으로 표시한다.
+USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용자가 다시 시작한다.
+
+### 실제 검증과 결과
+
+- 환경: Dell G15 5530, Intel i7-13650HX, NVIDIA RTX 4060 Laptop, BS2 Pro 펌웨어 `0.0.3.3`, 일반 전원 최대 2700 RPM.
+- 원본 서비스는 `Stopped`, 원본 Space Station 프로세스는 없는 상태에서 검증함.
+- GPU 온도는 기존 Windows System32의 `nvml.dll`로 실측. 해당 DLL의 Microsoft WHQL 서명 유효 및 `nvidia-smi` 조회도 확인. 시험 중 약 49~54°C.
+- `auto-exercise`: GPU 실측 53°C → 자동 목표 **2100 RPM** 적용 성공. 중지 후 시험 직전 목표 **1400 RPM**으로 복원. 저장 속도 `1400,2400,2700,2700` 유지. RGB/단계 표시등 꺼짐 유지.
+- WPF 시험: GPU 54°C 표시 → 자동 목표 2100 RPM → 수동 적용 비활성화 → 자동 중지 → 기존 목표 복원, 최소 창 크기 화면 검사 통과. 최신 화면은 로컬 `.analysis/automatic-ui-preview.png`에 보관.
+- `dotnet build Bs2Cooler.sln -c Release`: 성공, 경고 **0개**, 오류 **0개**.
+- `dotnet run --project tests/Bs2Cooler.Tests -c Release --no-build`: **24개 통과**. 온도 누락/만료/비정상값, CPU/GPU 최댓값, 전원 상한, 하강 여유, 고온 해제, Intel 레지스터 디코딩 포함.
+- `dotnet run --project tools/Bs2Cooler.UiSmoke -c Release --no-build -- .analysis/automatic-ui-preview.png --automatic`: 성공.
+- `tools/Publish-App.ps1`: 성공. EXE 272,360바이트, ZIP 177,833바이트. EXE SHA-256: `AFAB0C65B549B33FCBC69D45DC4F389CCD9B5FBD76AD8112F9B933304E76D5BA`.
+- 테스트/진단 도구도 제조사 런타임에 의존하지 않음. 앱의 드라이버/서비스 설치·시작, 관리자 권한 요청, 인터넷 통신 기능은 추가하지 않음.
+
+### CPU 센서 상태와 남은 검증
+
+- 현재 PC의 Windows ACPI/WMI CPU 온도 경로는 미지원 또는 유효 값 없음. 기존 PawnIO 장치 열기도 Windows 오류 2로 실패했고 등록/실행 중 드라이버 서비스가 없었음.
+- 따라서 **현재 실물 검증 완료 범위는 GPU 온도 기반 자동 제어**다. CPU 패키지 읽기 코드는 구현했으나 CPU 실측과 CPU/GPU 기준 실기 시험은 아직 수행하지 못함.
+- CPU까지 사용하려면 공식 서명 PawnIO를 관리자 권한으로 별도 설정해야 함. 추가 설치 여부에 관한 사용자 답변은 이 기록 시점까지 없으며 설치/드라이버 시작은 수행하지 않음. GPU 기준은 추가 설치 없이 사용 가능.
+- 모듈 출처: 공식 `namazso/PawnIO.Modules` 0.2.11 릴리스. `IntelMSR.bin` SHA-256: `D6ED85D65AB17A22F813EF98207D6D537155EE2DED5976A21CB48413C9B92E5F`. 제조사 폴더에서 모듈을 복사하지 않음. 앱은 온도 관련 MSR 2개의 읽기만 호출하며 쓰기는 노출하지 않음.
+- QC/PD 전원에서의 자동 속도 변경, USB 물리 분리/재연결 중 자동 모드 동작, CPU 드라이버 구성 후 실측은 이번 실기 검증 범위에 포함하지 않음. 전원 상한과 센서 오류 처리는 코드 테스트로 검증함.
+- CPU 설정 안내와 상세 동작: [AUTOMATIC-COOLING.ko.md](AUTOMATIC-COOLING.ko.md).
+- Git: 기존 `origin/main`과 로컬 HEAD 일치 확인. 변경 검토 및 커밋/푸시 결과는 실행 후 다음 기록에 추가함. `.analysis/`, `artifacts/`, `bin/obj`는 업로드에서 제외.
+
+## 2026-10-16 01:27:38 KST — 종료 중 복원 검증 및 최종 패키지 갱신
+
+- 자동 시작이 진행 중일 때 창을 연속으로 닫아도 통신 작업 완료/설정 복원 전에 종료되지 않도록 종료 완료 상태를 구분함. 재연결 작업도 종료 전에 끝나도록 처리함.
+- `Bs2Cooler.UiSmoke --close-during-start` 실물 검증: 자동 시작 직후 닫기 2회 요청 → 정상 종료 → 새 HID 연결로 기존 목표 1400 RPM과 수동 모드 복원 확인, 성공.
+- 수정 후 Release 빌드 경고/오류 0개, 프로토콜/온도 테스트 24개 통과. 일반 WPF 자동 시작/2100 RPM 적용/중지/기존 목표 복원 및 레이아웃 시험도 재실행해 통과.
+- 최종 게시를 다시 수행함. 앞선 01:24 기록의 패키지는 이 결과물로 갱신됨. EXE 272,360바이트, ZIP 177,859바이트.
+- **최종 EXE SHA-256**: `77E7C56BB00B2FF298DAAADA2CDFD6D43D6124FBF34046C2E268DAC31F24B68F`.
+- ZIP 내 실행 파일, 사용 설명서, 해시 파일, 외부 고지, IntelMSR 모듈/대응 소스/라이선스 포함을 확인함.
+- Git staged diff 검토: 자체 코드/문서 공백 오류 없음, 비밀키/인증 토큰 패턴 검색 결과 없음. 공식 외부 소스의 기존 줄 끝 공백은 원문 보존을 위해 수정하지 않았으며 자체 코드 검사와 구분함.
+- CPU 드라이버 설치/실측 검증은 여전히 미수행. 제조사 서비스는 중지 상태를 유지함.

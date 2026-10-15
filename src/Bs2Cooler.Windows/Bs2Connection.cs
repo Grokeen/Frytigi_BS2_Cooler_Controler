@@ -69,6 +69,39 @@ public sealed class Bs2Connection : IAsyncDisposable
     public async Task SetGearLightAsync(bool enabled, CancellationToken token = default) =>
         Bs2Protocol.RequireSuccess(await SendAsync(Bs2Protocol.GearLight(enabled), token).ConfigureAwait(false), Bs2Command.SetGearLight);
 
+    public async Task EnterAutomaticAsync(CancellationToken token = default)
+    {
+        var status = RequireLiveStatus();
+        if (status.IsSmart) return;
+        Bs2Protocol.RequireSuccess(await SendAsync(Bs2Protocol.EnterSmart(), token).ConfigureAwait(false), Bs2Command.EnterSmart);
+        var until = DateTime.UtcNow.AddSeconds(3);
+        while (DateTime.UtcNow < until)
+        {
+            token.ThrowIfCancellationRequested();
+            if (LatestStatus?.IsSmart == true) return;
+            await Task.Delay(50, token).ConfigureAwait(false);
+        }
+        throw new IOException("장치의 자동 모드 진입을 확인하지 못했습니다.");
+    }
+
+    public async Task SetAutomaticRpmAsync(int rpm, CancellationToken token = default)
+    {
+        var status = RequireLiveStatus();
+        if (!status.IsSmart) throw new InvalidOperationException("자동 모드에서만 온도 기반 RPM을 적용할 수 있습니다.");
+        Bs2Protocol.RequireSuccess(await SendAsync(Bs2Protocol.SetAutomaticRpm(rpm, status.MaximumRpm), token).ConfigureAwait(false), Bs2Command.SetAutomaticRpm);
+    }
+
+    public async Task ExitAutomaticAsync(CancellationToken token = default) =>
+        Bs2Protocol.RequireSuccess(await SendAsync(Bs2Protocol.ExitSmart(), token).ConfigureAwait(false), Bs2Command.ExitSmart);
+
+    private CoolerStatus RequireLiveStatus()
+    {
+        var status = LatestStatus;
+        if (status == null || DateTimeOffset.Now - status.ReceivedAt > TimeSpan.FromSeconds(6) || status.IsShutdown)
+            throw new InvalidOperationException("최신 장치 상태 또는 전원을 확인할 수 없습니다.");
+        return status;
+    }
+
     private async Task ReadLoopAsync()
     {
         byte[] buffer = new byte[Device.InputLength];
