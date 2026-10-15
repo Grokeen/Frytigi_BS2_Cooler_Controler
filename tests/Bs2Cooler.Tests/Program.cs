@@ -122,7 +122,85 @@ Run("Intel temperature decode validates hardware flags and target", () =>
     Equal(false, IntelThermalDecoder.TryDecode(0, 1UL << 31, out _));
     Equal(false, IntelThermalDecoder.TryDecode(100UL << 16, (1UL << 31) | (127UL << 16), out _));
 });
-Console.WriteLine($"PASS: {passed} protocol/thermal tests. No device or manufacturer libraries used.");
+Run("RGB hex accepts and normalizes valid colors", () =>
+{
+    Equal(new RgbColor(0x55, 0xCB, 0xB0), RgbColor.Parse("#55cbb0"));
+    Equal("#FF0080", RgbColor.Parse("ff0080").Hex);
+});
+Run("RGB hex rejects malformed colors", () =>
+{
+    foreach (string value in new[] { "", "#123", "##112233", "#GG1122", "11223344" }) Throws<FormatException>(() => RgbColor.Parse(value));
+});
+Run("RGB validates every setting before serialization", () =>
+{
+    foreach (var invalid in new[] { RgbSettings.Default with { Brightness = -1 }, RgbSettings.Default with { Brightness = 101 },
+        RgbSettings.Default with { Speed = 0 }, RgbSettings.Default with { Speed = 11 }, RgbSettings.Default with { BreathingColors = 0 },
+        RgbSettings.Default with { BreathingColors = 6 }, RgbSettings.Default with { Colors = [] }, RgbSettings.Default with { Effect = (RgbEffect)99 } })
+        Throws<ArgumentException>(() => RgbLighting.Serialize(invalid));
+});
+Run("All RGB effects use a bounded six-LED table", () =>
+{
+    foreach (var effect in Enum.GetValues<RgbEffect>())
+    {
+        byte[] data = RgbLighting.Serialize(RgbSettings.Default with { Effect = effect });
+        Equal(186, data.Length); Equal((byte)0, data[0]); Equal((byte)2, data[1]); Equal((byte)0, data[2]);
+        if (data[3] > 9) throw new Exception("RGB frame loop exceeds the firmware table.");
+    }
+});
+Run("RGB brightness and speed fields match firmware format", () =>
+{
+    var data = RgbLighting.Serialize(RgbSettings.Default with { Effect = RgbEffect.Rainbow, Brightness = 35, Speed = 8 });
+    Equal((byte)6, data[3]); Equal((byte)3, data[4]); Equal((byte)35, data[5]);
+    Equal((byte)11, RgbLighting.Serialize(RgbSettings.Default)[4]);
+});
+Run("Individual LED colors use LED-major frame ordering", () =>
+{
+    var settings = RgbSettings.Default with { Effect = RgbEffect.Individual };
+    byte[] data = RgbLighting.Serialize(settings);
+    for (int led = 0; led < 6; led++)
+    {
+        int offset = 6 + led * 30;
+        Equal(settings.Colors[led].Red, data[offset]); Equal(settings.Colors[led].Green, data[offset + 1]); Equal(settings.Colors[led].Blue, data[offset + 2]);
+        Equal((byte)0, data[offset + 3]);
+    }
+});
+Run("Breathing alternates dark frames and up to five colors", () =>
+{
+    var settings = RgbSettings.Default with { Effect = RgbEffect.Breathing, BreathingColors = 5 };
+    byte[] data = RgbLighting.Serialize(settings); Equal((byte)9, data[3]);
+    for (int frame = 0; frame < 10; frame++)
+    {
+        int offset = 6 + frame * 3;
+        Equal(frame % 2 == 0 ? (byte)0 : settings.Colors[frame / 2].Red, data[offset]);
+    }
+});
+Run("RGB transaction has prepare, 19 exact chunks, complete", () =>
+{
+    var commands = RgbLighting.BuildUpload(RgbSettings.Default);
+    Equal(21, commands.Count); Equal((byte)0x41, commands[0][3]); Equal((byte)0x43, commands[^1][3]);
+    var reconstructed = new List<byte>();
+    for (int index = 0; index < 19; index++)
+    {
+        var frame = Decode(commands[index + 1].AsSpan(1).ToArray());
+        Equal((byte)0x47, frame.Command); Equal((byte)index, frame.Payload[0]);
+        Equal(index == 18 ? 7 : 11, frame.Payload.Length);
+        reconstructed.AddRange(frame.Payload.Skip(1));
+    }
+    Equal(Convert.ToHexString(RgbLighting.Serialize(RgbSettings.Default)), Convert.ToHexString(reconstructed.ToArray()));
+});
+Run("RGB control vectors use the captured protocol checksum rule", () =>
+{
+    Equal("005AA5410243", Convert.ToHexString(Bs2Protocol.RgbPrepare().AsSpan(0, 6)));
+    Equal("005AA5430245", Convert.ToHexString(Bs2Protocol.RgbComplete().AsSpan(0, 6)));
+});
+Run("RGB chunks reject invalid indices and lengths", () =>
+{
+    Throws<ArgumentException>(() => Bs2Protocol.RgbChunk(-1, new byte[10]));
+    Throws<ArgumentException>(() => Bs2Protocol.RgbChunk(19, new byte[10]));
+    Throws<ArgumentException>(() => Bs2Protocol.RgbChunk(0, new byte[6]));
+    Throws<ArgumentException>(() => Bs2Protocol.RgbChunk(18, new byte[10]));
+});
+Console.WriteLine($"PASS: {passed} protocol/thermal/RGB tests. No device or manufacturer libraries used.");
 return;
 
 void Run(string name, Action test) { test(); passed++; Console.WriteLine("PASS " + name); }

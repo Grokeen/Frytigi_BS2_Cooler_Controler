@@ -13,8 +13,11 @@ public enum Bs2Command : byte
     FanMode = 0x25,
     SetGear = 0x26,
     GearSpeeds = 0x27,
+    RgbPrepare = 0x41,
+    RgbComplete = 0x43,
     RgbStatus = 0x45,
     SetRgb = 0x46,
+    RgbChunk = 0x47,
     SetGearLight = 0x48,
     Status = 0xEF
 }
@@ -56,6 +59,16 @@ public static class Bs2Protocol
     }
     public static byte[] Rgb(bool enabled) => Encode(Bs2Command.SetRgb, [(byte)(enabled ? 1 : 0)]);
     public static byte[] GearLight(bool enabled) => Encode(Bs2Command.SetGearLight, [(byte)(enabled ? 1 : 0)]);
+    public static byte[] RgbPrepare() => Encode(Bs2Command.RgbPrepare, []);
+    public static byte[] RgbComplete() => Encode(Bs2Command.RgbComplete, []);
+    public static byte[] RgbChunk(int index, ReadOnlySpan<byte> data)
+    {
+        if (index is < 0 or > 18 || data.Length != (index == 18 ? 6 : 10))
+            throw new ArgumentException("RGB 전송 조각의 번호/길이가 올바르지 않습니다.");
+        byte[] payload = new byte[data.Length + 1]; payload[0] = (byte)index;
+        data.CopyTo(payload.AsSpan(1));
+        return Encode(Bs2Command.RgbChunk, payload);
+    }
 
     public static byte[] SetGear(int gear, int rpm, int maximumRpm)
     {

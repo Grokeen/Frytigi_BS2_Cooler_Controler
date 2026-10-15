@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Bs2Cooler.Windows;
+using Bs2Cooler.Core;
 
 internal static class Program
 {
@@ -73,6 +74,7 @@ internal static class Program
                     if (((Button)window.FindName("ApplyButton")).IsEnabled) throw new Exception("Manual writes remain enabled during automatic mode.");
                     Console.WriteLine("AUTOMATIC UI: " + ((TextBlock)window.FindName("AutoState")).Text);
                 }
+                if (args.Contains("--rgb")) await ExerciseRgbEditorAsync(window);
                 window.UpdateLayout();
                 var root = (FrameworkElement)window.Content;
                 if (!exerciseAutomatic) CheckLayout(window, root);
@@ -119,5 +121,91 @@ internal static class Program
         Rect noteBounds = note.TransformToAncestor(root).TransformBounds(new Rect(note.RenderSize));
         Rect panelBounds = panel.TransformToAncestor(root).TransformBounds(new Rect(panel.RenderSize));
         if (noteBounds.Bottom > panelBounds.Bottom - 10) throw new Exception("Fan controls are clipped at this window size.");
+        var firmware = (FrameworkElement)window.FindName("FirmwareText");
+        Rect firmwareBounds = firmware.TransformToAncestor(root).TransformBounds(new Rect(firmware.RenderSize));
+        if (firmwareBounds.Bottom > panelBounds.Bottom - 15) throw new Exception("Lighting controls are clipped at this window size.");
+    }
+
+    private static async Task ExerciseRgbEditorAsync(Window main)
+    {
+        var baseline = RgbSettingsStore.Load() ?? throw new Exception("RGB UI exercise requires a previously saved app palette for exact restoration.");
+        bool enabled = ((Button)main.FindName("RgbButton")).Content.ToString()!.StartsWith("켜짐");
+        var completion = new TaskCompletionSource<Exception?>();
+        _ = main.Dispatcher.BeginInvoke(async () =>
+        {
+            Bs2Cooler.App.RgbWindow? editor = null;
+            Exception? failure = null;
+            try
+            {
+                editor = Application.Current.Windows.OfType<Bs2Cooler.App.RgbWindow>().Single();
+                ((TextBox)editor.FindName("Color0")).Text = "#GG1122";
+                ((Button)editor.FindName("ApplyRgb")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (!((TextBlock)editor.FindName("RgbStatus")).Text.Contains("#RRGGBB")) throw new Exception("Invalid RGB input was not rejected.");
+                var test = baseline with { Effect = RgbEffect.Individual, Brightness = 35, Speed = 8, Colors = [RgbColor.Parse("#123456"), ..baseline.Colors.Skip(1)] };
+                SetRgbEditor(editor, test, enabled);
+                await ApplyRgbEditorAsync(editor);
+                var saved = RgbSettingsStore.Load()!;
+                if (saved.Effect != RgbEffect.Individual || saved.Brightness != 35 || saved.Colors[0].Hex != "#123456") throw new Exception("RGB settings were not applied and saved.");
+                editor.UpdateLayout();
+                SaveWindowImage(editor, ".analysis/rgb-ui-preview.png");
+                editor.Width = editor.MinWidth; editor.Height = editor.MinHeight;
+                await Task.Delay(150); editor.UpdateLayout();
+                var root = (FrameworkElement)editor.Content;
+                var apply = (FrameworkElement)editor.FindName("ApplyRgb");
+                Rect bounds = apply.TransformToAncestor(root).TransformBounds(new Rect(apply.RenderSize));
+                if (bounds.Bottom > root.ActualHeight || bounds.Right > root.ActualWidth) throw new Exception("RGB apply control is clipped.");
+                Console.WriteLine("PASS: RGB dialog input validation, real device apply, local save, preview and minimum-size layout.");
+            }
+            catch (Exception ex) { failure = ex; }
+            finally
+            {
+                if (editor != null)
+                {
+                    try
+                    {
+                        SetRgbEditor(editor, baseline, enabled);
+                        await ApplyRgbEditorAsync(editor);
+                        Console.WriteLine("RGB UI: previous app palette and enable state restored.");
+                    }
+                    catch (Exception ex) { failure = failure == null ? ex : new AggregateException(failure, ex); }
+                    editor.Close();
+                }
+                completion.TrySetResult(failure);
+            }
+        });
+        ((Button)main.FindName("RgbDetailsButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (await completion.Task is { } error) throw error;
+    }
+
+    private static void SetRgbEditor(Bs2Cooler.App.RgbWindow editor, RgbSettings settings, bool enabled)
+    {
+        ((ComboBox)editor.FindName("EffectChoice")).SelectedIndex = (int)settings.Effect;
+        ((Slider)editor.FindName("Brightness")).Value = settings.Brightness;
+        ((Slider)editor.FindName("EffectSpeed")).Value = settings.Speed;
+        ((ComboBox)editor.FindName("BreathingCount")).SelectedIndex = settings.BreathingColors - 1;
+        ((CheckBox)editor.FindName("EnableLight")).IsChecked = enabled;
+        for (int i = 0; i < 6; i++) ((TextBox)editor.FindName($"Color{i}")).Text = settings.Colors[i].Hex;
+    }
+
+    private static async Task ApplyRgbEditorAsync(Bs2Cooler.App.RgbWindow editor)
+    {
+        var apply = (Button)editor.FindName("ApplyRgb");
+        apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var until = DateTime.UtcNow.AddSeconds(15);
+        while (!apply.IsEnabled && DateTime.UtcNow < until) await Task.Delay(50);
+        if (!apply.IsEnabled || !((TextBlock)editor.FindName("RgbStatus")).Text.StartsWith("조명 설정을 적용하고"))
+            throw new Exception("RGB UI device apply failed: " + ((TextBlock)editor.FindName("RgbStatus")).Text);
+    }
+
+    private static void SaveWindowImage(Window window, string path)
+    {
+        var root = (FrameworkElement)window.Content;
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth + root.Margin.Left + root.Margin.Right), (int)Math.Ceiling(root.ActualHeight + root.Margin.Top + root.Margin.Bottom), 96, 96, PixelFormats.Pbgra32);
+        var background = new DrawingVisual();
+        using (var drawing = background.RenderOpen()) drawing.DrawRectangle(window.Background, null, new Rect(0, 0, bitmap.Width, bitmap.Height));
+        bitmap.Render(background); bitmap.Render(root);
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        using var output = File.Create(path); encoder.Save(output);
     }
 }

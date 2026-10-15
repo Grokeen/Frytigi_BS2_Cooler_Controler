@@ -79,7 +79,10 @@
           <Button x:Name="CpuPermissionButton" Content="CPU 온도 권한으로 다시 실행" Click="OnCpuPermissionClick" Visibility="Collapsed" FontSize="10" Padding="7,8" Margin="0,8,0,0" />
           <Border Height="1" Background="#2C3C50" Margin="0,16,0,16" />
           <TextBlock Text="RGB 조명" Foreground="{StaticResource Muted}" Margin="0,0,0,8" />
-          <Button x:Name="RgbButton" Content="확인 중" Click="OnRgbClick" HorizontalContentAlignment="Left" />
+          <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Button x:Name="RgbButton" Content="확인 중" Click="OnRgbClick" Padding="7,10" FontSize="12"/>
+            <Button Grid.Column="2" x:Name="RgbDetailsButton" Content="세부 설정" Click="OnRgbDetailsClick" Padding="7,10" FontSize="12"/>
+          </Grid>
           <TextBlock Text="단계 표시등" Foreground="{StaticResource Muted}" Margin="0,15,0,8" />
           <Button x:Name="GearLightButton" Content="확인 중" Click="OnGearLightClick" />
           <Border Height="1" Background="#2C3C50" Margin="0,23,0,16" />

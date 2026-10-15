@@ -160,6 +160,7 @@ public partial class MainWindow : Window
         bool enabled = live && _status?.IsShutdown == false && !_busy && !_closing;
         ApplyButton.IsEnabled = enabled && !_automatic;
         RgbButton.IsEnabled = enabled;
+        RgbDetailsButton.IsEnabled = enabled;
         GearLightButton.IsEnabled = enabled;
         RpmSlider.IsEnabled = enabled && !_automatic;
         RpmInput.IsEnabled = enabled && !_automatic;
@@ -221,6 +222,23 @@ public partial class MainWindow : Window
     {
         if (_connection is not { } connection || _status is not { } status) return;
         await RunActionAsync(() => connection.SetGearLightAsync(!status.GearLightEnabled), status.GearLightEnabled ? "단계 표시등을 껐습니다." : "단계 표시등을 켰습니다.");
+    }
+    private void OnRgbDetailsClick(object sender, RoutedEventArgs e)
+    {
+        if (_busy || _closing || _connection == null || _status == null) return;
+        var editor = new RgbWindow(async (settings, enabled) =>
+        {
+            if (_busy || _closing || _connection is not { } connection) throw new InvalidOperationException("장치 연결과 작업 상태를 확인해 주세요.");
+            _busy = true; UpdateControls();
+            try
+            {
+                while (_polling) await Task.Delay(25);
+                await connection.ApplyRgbAsync(settings, enabled);
+                StatusText.Text = "RGB 색상/효과/밝기 설정을 적용했습니다.";
+            }
+            finally { _busy = false; UpdateControls(); }
+        }, _status.RgbEnabled) { Owner = this };
+        editor.ShowDialog();
     }
     private async void OnRefreshClick(object sender, RoutedEventArgs e)
     {

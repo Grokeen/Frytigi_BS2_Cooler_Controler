@@ -14,7 +14,7 @@ try
         Console.WriteLine(reading.Gpu is { } gpu ? $"GPU={gpu.Celsius:F1} C, source={gpu.Source}, captured={gpu.CapturedAt:O}" : reading.GpuStatus);
         return reading.Gpu == null || (args.Contains("--require-cpu") && reading.Cpu == null) ? 1 : 0;
     }
-    if (operation is not ("scan" or "query" or "exercise" or "set" or "auto-exercise")) throw new ArgumentException("Use scan, query, thermal, auto-exercise, exercise, or set.");
+    if (operation is not ("scan" or "query" or "exercise" or "set" or "auto-exercise" or "rgb-exercise")) throw new ArgumentException("Use scan, query, thermal, auto-exercise, rgb-exercise, exercise, or set.");
     var devices = NativeHid.Enumerate();
     foreach (var item in devices)
         Console.WriteLine($"{item.Product}: 37D7:1002 usage={item.UsagePage:X4}:{item.Usage} input={item.InputLength} output={item.OutputLength} supported={item.IsSupported}");
@@ -31,6 +31,34 @@ try
     var status = connection.LatestStatus;
     Console.WriteLine(status == null ? "No heartbeat observed." : $"Heartbeat: gear={status.Gear} max={status.MaximumRpm} power={status.PowerMode} smart={status.IsSmart} rgb={status.RgbEnabled} gearLight={status.GearLightEnabled}");
     if (operation == "query") return 0;
+    if (operation == "rgb-exercise")
+    {
+        if (status == null || status.IsShutdown) throw new InvalidOperationException("RGB exercise requires a running cooler with live heartbeat.");
+        var previous = RgbSettingsStore.Load();
+        var finalSettings = previous ?? RgbSettings.Default;
+        Console.WriteLine(previous == null ? "Original color table cannot be read; this first RGB test will leave the documented cyan/50% preset, preserving original lighting enable flags." : "The last app-applied palette will be restored.");
+        try
+        {
+            await connection.SetRgbAsync(false);
+            foreach (var effect in Enum.GetValues<RgbEffect>())
+            {
+                var settings = RgbSettings.Default with { Effect = effect, Brightness = 35, Speed = 8, BreathingColors = 5 };
+                await connection.ApplyRgbAsync(settings, false);
+                Console.WriteLine($"RGB ACK: {effect}, brightness=35, speed=8, payload={RgbLighting.Serialize(settings).Length}, commands=21");
+            }
+        }
+        finally
+        {
+            await connection.ApplyRgbAsync(finalSettings, status.RgbEnabled);
+            RgbSettingsStore.Save(finalSettings);
+            await WaitForLights(status.RgbEnabled, status.GearLightEnabled);
+            var after = await connection.ReadRpmAsync();
+            var afterGears = Bs2Protocol.ParseGearSpeeds(await connection.SendAsync(Bs2Protocol.Query(Bs2Command.GearSpeeds)));
+            if (after.TargetRpm != speed.TargetRpm || !afterGears.SequenceEqual(gears)) throw new IOException("RGB exercise changed fan settings.");
+            Console.WriteLine($"RGB FINISHED: RGB={status.RgbEnabled}, gearLight={status.GearLightEnabled}, target={after.TargetRpm}, all fan presets unchanged. Final app palette={finalSettings.Effect}/{finalSettings.Brightness}%.");
+        }
+        return 0;
+    }
     if (operation == "auto-exercise")
     {
         if (status == null || status.IsSmart || status.IsShutdown || gears[status.Gear - 1] != speed.TargetRpm)

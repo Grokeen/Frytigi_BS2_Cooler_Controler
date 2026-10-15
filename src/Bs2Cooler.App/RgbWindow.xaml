@@ -1,0 +1,52 @@
+<Window x:Class="Bs2Cooler.App.RgbWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="RGB 세부 설정 · BS2 Cooler"
+        Width="740" Height="780" MinWidth="690" MinHeight="680" Background="#0E1622"
+        Foreground="#EDF4FF" FontFamily="Malgun Gothic, Segoe UI" FontSize="13"
+        WindowStartupLocation="CenterOwner" Closing="OnClosing">
+  <Grid Margin="26">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <StackPanel Margin="0,0,0,20"><TextBlock Text="RGB 세부 설정" FontSize="25" FontWeight="SemiBold"/>
+      <TextBlock Text="색상과 효과를 고른 뒤 적용하세요." Foreground="{StaticResource Muted}" Margin="0,6,0,0"/>
+    </StackPanel>
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel x:Name="EditorPanel" Margin="0,0,10,0">
+        <CheckBox x:Name="EnableLight" Content="RGB 조명 켜기" Foreground="#EDF4FF" Margin="0,0,0,17"/>
+        <TextBlock Text="조명 효과" Foreground="{StaticResource Muted}" Margin="0,0,0,7"/>
+        <ComboBox x:Name="EffectChoice" SelectedIndex="0" SelectionChanged="OnEffectChanged" Padding="7" Foreground="#172332">
+          <ComboBoxItem Content="단색"/><ComboBoxItem Content="호흡 · 색상 순환"/><ComboBoxItem Content="무지개"/>
+          <ComboBoxItem Content="파도"/><ComboBoxItem Content="점멸"/><ComboBoxItem Content="흐르는 색상"/>
+          <ComboBoxItem Content="LED별 고정 색상"/><ComboBoxItem Content="색상 회전"/>
+        </ComboBox>
+        <Grid Margin="0,19,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="35"/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <StackPanel><DockPanel><TextBlock Text="밝기" Foreground="{StaticResource Muted}"/><TextBlock HorizontalAlignment="Right" Text="{Binding Value, ElementName=Brightness, StringFormat={}{0:F0}%}"/></DockPanel>
+            <Slider x:Name="Brightness" Minimum="0" Maximum="100" Value="50" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,12,0,0" AutomationProperties.Name="RGB 밝기"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2"><DockPanel><TextBlock Text="효과 속도" Foreground="{StaticResource Muted}"/><TextBlock HorizontalAlignment="Right" Text="{Binding Value, ElementName=EffectSpeed, StringFormat={}{0:F0} / 10}"/></DockPanel>
+            <Slider x:Name="EffectSpeed" Minimum="1" Maximum="10" Value="5" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,12,0,0" AutomationProperties.Name="RGB 효과 속도"/>
+          </StackPanel>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,18,0,18"><TextBlock Text="호흡에 사용할 색상 수" VerticalAlignment="Center" Foreground="{StaticResource Muted}"/>
+          <ComboBox x:Name="BreathingCount" SelectedIndex="0" Width="65" Padding="6" Margin="15,0,0,0" Foreground="#172332">
+            <ComboBoxItem Content="1"/><ComboBoxItem Content="2"/><ComboBoxItem Content="3"/><ComboBoxItem Content="4"/><ComboBoxItem Content="5"/>
+          </ComboBox>
+        </StackPanel>
+        <TextBlock Text="색상 · #RRGGBB" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+        <UniformGrid Columns="3">
+          <StackPanel Margin="0,0,12,14"><TextBlock Text="색상 1 / LED 1" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch0" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color0" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 1"/></StackPanel>
+          <StackPanel Margin="0,0,12,14"><TextBlock Text="색상 2 / LED 2" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch1" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color1" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 2"/></StackPanel>
+          <StackPanel Margin="0,0,12,14"><TextBlock Text="색상 3 / LED 3" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch2" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color2" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 3"/></StackPanel>
+          <StackPanel Margin="0,0,12,0"><TextBlock Text="색상 4 / LED 4" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch3" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color3" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 4"/></StackPanel>
+          <StackPanel Margin="0,0,12,0"><TextBlock Text="색상 5 / LED 5" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch4" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color4" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 5"/></StackPanel>
+          <StackPanel Margin="0,0,12,0"><TextBlock Text="색상 6 / LED 6" Foreground="{StaticResource Muted}" Margin="0,0,0,6"/><Border x:Name="Swatch5" Height="12" CornerRadius="4" Margin="0,0,0,7"/><TextBox x:Name="Color5" TextChanged="OnColorChanged" MaxLength="7" AutomationProperties.Name="RGB 색상 6"/></StackPanel>
+        </UniformGrid>
+        <TextBlock x:Name="ColorHint" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,14,0,16"/>
+        <StackPanel Orientation="Horizontal"><Button Content="기본값 불러오기" Click="OnDefaultsClick" Padding="12,8"/><Button Content="마지막 적용값" Click="OnLoadClick" Padding="12,8" Margin="10,0,0,0"/></StackPanel>
+        <TextBlock Text="장치의 기존 색상표 조회는 지원하지 않습니다. 마지막 적용값은 이 PC에 저장합니다." TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,13,0,5"/>
+      </StackPanel>
+    </ScrollViewer>
+    <Grid Grid.Row="2" Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock x:Name="RgbStatus" TextWrapping="Wrap" Foreground="#8BE5CA" VerticalAlignment="Center" Margin="0,0,15,0"/>
+      <Button x:Name="ApplyRgb" Grid.Column="1" Content="조명 설정 적용" Click="OnApplyClick" Background="#55CBB0" Foreground="#082D27" FontWeight="Bold" Padding="18,12"/>
+    </Grid>
+  </Grid>
+</Window>

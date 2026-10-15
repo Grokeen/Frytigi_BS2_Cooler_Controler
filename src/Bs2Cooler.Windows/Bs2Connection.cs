@@ -32,19 +32,40 @@ public sealed class Bs2Connection : IAsyncDisposable
             throw new ArgumentException("잘못된 USB 명령입니다.", nameof(packet));
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetime.Token);
         await _commands.WaitAsync(linked.Token).ConfigureAwait(false);
+        try { return await SendLockedAsync(packet, linked.Token).ConfigureAwait(false); }
+        finally { _commands.Release(); }
+    }
+
+    private async Task<Bs2Frame> SendLockedAsync(byte[] packet, CancellationToken token)
+    {
         var pending = new Pending(packet[3], new(TaskCreationOptions.RunContinuationsAsynchronously));
         try
         {
             lock (_pendingLock) _pending = pending;
-            await _stream.WriteAsync(packet, linked.Token).ConfigureAwait(false);
-            return await pending.Completion.Task.WaitAsync(TimeSpan.FromMilliseconds(1500), linked.Token).ConfigureAwait(false);
+            await _stream.WriteAsync(packet, token).ConfigureAwait(false);
+            return await pending.Completion.Task.WaitAsync(TimeSpan.FromMilliseconds(1500), token).ConfigureAwait(false);
         }
         catch (TimeoutException) { throw new TimeoutException($"BS2 Pro 응답 시간 초과 (명령 0x{packet[3]:X2}). USB 연결을 확인해 주세요."); }
         finally
         {
             lock (_pendingLock) { if (ReferenceEquals(_pending, pending)) _pending = null; }
-            _commands.Release();
         }
+    }
+
+    public async Task ApplyRgbAsync(RgbSettings settings, bool enabled, CancellationToken token = default)
+    {
+        var packets = RgbLighting.BuildUpload(settings); // Validate everything before starting a device transaction.
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        RequireLiveStatus();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, _lifetime.Token);
+        await _commands.WaitAsync(linked.Token).ConfigureAwait(false);
+        try
+        {
+            foreach (byte[] packet in packets)
+                Bs2Protocol.RequireSuccess(await SendLockedAsync(packet, linked.Token).ConfigureAwait(false), (Bs2Command)packet[3]);
+            Bs2Protocol.RequireSuccess(await SendLockedAsync(Bs2Protocol.Rgb(enabled), linked.Token).ConfigureAwait(false), Bs2Command.SetRgb);
+        }
+        finally { _commands.Release(); }
     }
 
     public async Task<FanSpeed> ReadRpmAsync(CancellationToken token = default) =>
