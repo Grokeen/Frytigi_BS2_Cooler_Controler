@@ -68,6 +68,7 @@ internal static class Program
                         throw new Exception("CPU/GPU automatic mode allowed missing CPU data.");
                     Console.WriteLine("PASS: CPU permission prompt and unavailable CPU/GPU control lockout.");
                 }
+                if (args.Contains("--theme")) await ThemeSmoke.MainAsync(window);
                 bool exerciseAutomatic = args.Contains("--automatic") || cpuGpu;
                 string baselineTarget = ((TextBlock)window.FindName("TargetRpm")).Text;
                 if (args.Contains("--close-during-start"))
@@ -98,7 +99,7 @@ internal static class Program
                     if (((Button)window.FindName("ApplyButton")).IsEnabled) throw new Exception("Manual writes remain enabled during automatic mode.");
                     Console.WriteLine("AUTOMATIC UI: " + ((TextBlock)window.FindName("AutoState")).Text);
                 }
-                if (args.Contains("--rgb")) await ExerciseRgbEditorAsync(window);
+                if (args.Contains("--rgb")) await ExerciseRgbEditorAsync(window, args.Contains("--theme"));
                 window.UpdateLayout();
                 var root = (FrameworkElement)window.Content;
                 if (!exerciseAutomatic) CheckLayout(window, root);
@@ -150,7 +151,7 @@ internal static class Program
         if (firmwareBounds.Bottom > panelBounds.Bottom - 15) throw new Exception("Lighting controls are clipped at this window size.");
     }
 
-    private static async Task ExerciseRgbEditorAsync(Window main)
+    private static async Task ExerciseRgbEditorAsync(Window main, bool theme)
     {
         var baseline = RgbSettingsStore.Load() ?? throw new Exception("RGB UI exercise requires a previously saved app palette for exact restoration.");
         bool enabled = ((Button)main.FindName("RgbButton")).Content.ToString()!.StartsWith("켜짐");
@@ -162,6 +163,8 @@ internal static class Program
             try
             {
                 editor = Application.Current.Windows.OfType<Bs2Cooler.App.RgbWindow>().Single();
+                await Task.Delay(250);
+                if (theme) await ThemeSmoke.RgbAsync(editor);
                 ((TextBox)editor.FindName("Color0")).Text = "#GG1122";
                 ((Button)editor.FindName("ApplyRgb")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 if (!((TextBlock)editor.FindName("RgbStatus")).Text.Contains("#RRGGBB")) throw new Exception("Invalid RGB input was not rejected.");

@@ -8,6 +8,7 @@ $executablePath = Join-Path $workspace 'artifacts\Bs2Cooler-win-x64\Bs2Cooler.ex
 $archive = [IO.Compression.ZipFile]::OpenRead($packagePath)
 try {
     $required = @('Bs2Cooler.exe','User-Guide.ko.txt','SHA256SUMS.txt','THIRD_PARTY_NOTICES.txt','Install-Desktop.ps1','assets/Bs2Cooler.ico','assets/Bs2Cooler.png','assets/Bs2Cooler.svg','docs/DESKTOP-STARTUP.ko.md','docs/AUTOMATIC-COOLING.ko.md','docs/RGB-LIGHTING.ko.md','third_party/PawnIO.Modules/0.2.11/COPYING','third_party/PawnIO.Modules/0.2.11/IntelMSR.p','third_party/PawnIO.Modules/0.2.11/IntelMSR.bin')
+    $required += 'docs/DARK-THEME.ko.md'
     $entries = @{}
     foreach ($entry in $archive.Entries) {
         $name = $entry.FullName.Replace('\','/')

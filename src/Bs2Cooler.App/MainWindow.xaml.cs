@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     public MainWindow(bool trayMode)
     {
         InitializeComponent();
+        WindowTheme.Apply(this);
         ConfigureDesktopMode(trayMode);
         InitializeTemperatureMonitoring();
         _timer.Tick += async (_, _) =>

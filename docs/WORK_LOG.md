@@ -489,3 +489,19 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 60°C 이상 최대 풍량/57°C 미만 해제/70°C 도달·초과 조건은 테스트 데이터로 검증했고, 고부하 실물에서 실제 70°C 이하를 지속 유지했다고 주장하지 않음. 냉각 성능의 한계는 화면/문서에 표시함.
 - GitHub 프로필은 기존 Pull Shark/Quickdraw 기본 배지를 계속 표시함. 새 업적 획득으로 기록하지 않음. 실제 기능 PR과 결과 문서 PR로 작업을 반영함.
 - 최종 결과 문서는 후속 PR로 빌드 검증 후 main에 반영함. 다운로드 자료/원시 로그/화면/개인 설정은 Git에서 제외하고 앱 소스·테스트·문서만 올림.
+
+## 2026-10-16 03:44:56 KST — 다크 테마·이벤트 애니메이션 0.4.3 구현/실물 검증
+
+- 사용자 요청: 흰색 콤보박스를 포함한 UI 통일과 화면 이벤트 애니메이션. 기존 `feature/dark-theme-motion` 브랜치에서 작업함.
+- `Styles.xaml`에 메인/RGB 공통 어두운 팔레트와 Button/TextBox/ComboBox/ComboBoxItem/TabControl/TabItem/CheckBox/Slider/ScrollBar/ToolTip 템플릿을 적용함. 펼친 목록과 선택 글자의 검은색 강제 지정을 제거하고 키보드 포커스·비활성 상태를 구분함.
+- `WindowTheme.cs`는 기존 Windows 창 테두리를 유지하면서 DWM 다크 제목 표시줄을 요청함. Windows 11 색상 속성을 적용하고 미지원 속성 실패는 창 실행을 막지 않음. `DarkTrayRenderer.cs`는 트레이 우클릭 메뉴·체크 표시에도 같은 색상을 적용함. RGB 창에 기존 팬 아이콘도 지정함.
+- `UiMotion.cs`: 버튼 가리킴/누름 100~120ms, 창·탭·목록 열기 180ms, 연결/작업 상태 변경 220ms의 일회성 효과. Windows `ClientAreaAnimation` Off를 존중함. 온도/RPM/주기적 자동 상태 수치에는 효과를 붙이지 않았고 숨긴 창은 표시 효과를 시작하지 않음. 별도 애니메이션 타이머/패키지/네트워크 기능을 추가하지 않음.
+- 버전 csproj/manifest **0.4.3**, README/사용 설명서/Release 노트/구현 문서/외부 고지 갱신. `DARK-THEME.ko.md`를 작성하고 ZIP 필수 안내 문서에 포함함.
+- 초기 트레이 체크 렌더러의 DrawLines 오버로드 컴파일 오류를 명시적 `PointF[]`로 수정한 뒤 빌드 성공함. UI 시험의 초기 실패 두 종류는 시험의 WPF 가정 문제로 확인: 팝업 닫힘의 dispatcher 반영을 기다린 후 닫힌 콤보 키보드 선택을 검사하고, FillBehavior.Stop 후 남은 이전 clock을 시험에서 제거한 뒤 애니메이션 생략 여부를 검사하도록 수정함.
+- 최종 `dotnet build Bs2Cooler.sln -c Release`: **경고 0/오류 0**. 기존 프로토콜/온도/RGB 테스트 **40개 모두 통과**. `Publish-App.ps1`과 ZIP 필수 파일/중복·안전 경로/내부 EXE SHA 검사도 통과함. 이 단계의 게시본은 미커밋 개발 검증용이며 최종 소스 병합 후 다시 게시/설치함.
+- 관리자 WPF 실물 시험 `--cpu-gpu --target-70 --rgb --theme` exit **0**: CPU **58°C**, GPU **47°C** 실제 수집. 네 콤보박스의 어두운 표면·목록·밝은 글자·키보드 선택, RGB 입력/체크 표시/슬라이더 명령, Windows 11 다크 제목 표시줄 속성, 탭 전환/상태 효과 완료/명시적 애니메이션 생략 검사 통과.
+- RGB 잘못된 HEX 거부, 실제 장치 적용/로컬 저장/원래 팔레트 및 On/Off 복원, CPU/GPU 자동 시작·중지/수동 쓰기 차단/원래 목표 RPM 복원, 기본·최소 크기 배치 검사 통과. 73°C 표시는 기존 UI fixture만 사용했고 실제 가열하지 않음.
+- `.analysis/dark-theme-ui-preview.png`, `rgb-ui-preview.png`, `dark-combo-popup.png`, `dark-rgb-popup.png`를 열어 메인/RGB와 펼친 목록의 대비/배치를 확인함. 원시 시험 로그는 `.analysis/dark-theme-ui-verification.txt`에만 보관함.
+- 시험 중 기존 자동 앱을 정상 종료하고 finally에서 같은 예약 작업으로 다시 시작함. 사용자 설정 **AutoStartCooling On/CPU·GPU 기준**과 70°C 목표 정책을 유지함. USB/온도 제어 Core 코드는 변경하지 않음.
+- 검증 범위: 현재 Windows 11/현재 DPI, 장치 일반 전원. 고대비/다중 모니터 DPI/Windows 애니메이션 시스템 설정 자체의 On·Off 전환/실제 재부팅은 수행하지 않음. 애니메이션 생략은 요소 설정으로 검사하고 시스템 설정 준수는 같은 공통 조건을 코드로 확인함.
+- GitHub CI/PR/Release와 최종 설치 해시는 실제 완료 후 별도 기록함.

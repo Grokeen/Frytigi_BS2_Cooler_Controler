@@ -16,6 +16,7 @@ public partial class RgbWindow : Window
     {
         _apply = apply;
         InitializeComponent();
+        WindowTheme.Apply(this);
         EnableLight.IsChecked = enabled;
         RgbSettings settings = RgbSettings.Default;
         try
