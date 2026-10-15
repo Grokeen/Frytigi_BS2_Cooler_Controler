@@ -9,7 +9,7 @@ public sealed record TemperatureReading(double Celsius, string Source, DateTimeO
         && CapturedAt <= now.AddSeconds(2) && now - CapturedAt <= TimeSpan.FromSeconds(8);
 }
 
-public sealed record TemperatureSnapshot(TemperatureReading? Cpu, TemperatureReading? Gpu, string CpuStatus, string GpuStatus);
+public sealed record TemperatureSnapshot(TemperatureReading? Cpu, TemperatureReading? Gpu, string CpuStatus, string GpuStatus, bool CpuElevationRequired = false);
 public sealed record CoolingDecision(int Rpm, double? Temperature, bool FailSafe, string Description);
 
 public static class IntelThermalDecoder

@@ -16,6 +16,7 @@ public sealed class IntelTemperatureReader : IDisposable
     private SafeFileHandle? _handle;
     private DateTimeOffset _retryAt;
     public string Status { get; private set; } = "CPU 센서 확인 중";
+    public bool RequiresElevation { get; private set; }
 
     public TemperatureReading? Read()
     {
@@ -31,6 +32,7 @@ public sealed class IntelTemperatureReader : IDisposable
     {
         if (DateTimeOffset.Now < _retryAt) return false;
         _retryAt = DateTimeOffset.Now.AddSeconds(5);
+        RequiresElevation = false;
         if (!X86Base.IsSupported) { Status = "Intel CPU 센서 지원 대상 아님"; return false; }
         var vendor = X86Base.CpuId(0, 0);
         if (vendor.Ebx != 0x756E6547 || vendor.Edx != 0x49656E69 || vendor.Ecx != 0x6C65746E)
@@ -39,6 +41,7 @@ public sealed class IntelTemperatureReader : IDisposable
         if (handle.IsInvalid)
         {
             int error = Marshal.GetLastWin32Error(); handle.Dispose();
+            RequiresElevation = error == 5;
             Status = error == 5 ? "CPU 센서 접근 권한 부족" : "CPU 센서 드라이버 미설정";
             return false;
         }

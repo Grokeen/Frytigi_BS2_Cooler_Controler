@@ -53,7 +53,7 @@
           </StackPanel></TabItem>
           <TabItem Header="온도 자동"><StackPanel Margin="0,14,0,0">
             <TextBlock Text="제어 기준" Foreground="{StaticResource Muted}" Margin="0,0,0,6" />
-            <ComboBox x:Name="TemperatureSource" SelectedIndex="1" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
+            <ComboBox x:Name="TemperatureSource" SelectedIndex="0" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
               <ComboBoxItem><TextBlock Text="CPU / GPU 중 더 높은 온도" Foreground="#172332" /></ComboBoxItem>
               <ComboBoxItem><TextBlock Text="GPU 온도만" Foreground="#172332" /></ComboBoxItem>
             </ComboBox>
@@ -76,6 +76,7 @@
             <StackPanel><TextBlock Text="GPU" Foreground="{StaticResource Muted}" FontSize="11" /><TextBlock x:Name="GpuTemperature" Text="—" FontSize="25" Margin="0,5,0,0" /></StackPanel>
           </UniformGrid>
           <TextBlock x:Name="SensorDescription" Text="온도 센서 확인 중" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0" />
+          <Button x:Name="CpuPermissionButton" Content="CPU 온도 권한으로 다시 실행" Click="OnCpuPermissionClick" Visibility="Collapsed" FontSize="10" Padding="7,8" Margin="0,8,0,0" />
           <Border Height="1" Background="#2C3C50" Margin="0,16,0,16" />
           <TextBlock Text="RGB 조명" Foreground="{StaticResource Muted}" Margin="0,0,0,8" />
           <Button x:Name="RgbButton" Content="확인 중" Click="OnRgbClick" HorizontalContentAlignment="Left" />

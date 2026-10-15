@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Diagnostics;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Bs2Cooler.Core;
@@ -17,7 +19,6 @@ public partial class MainWindow
     private bool _automatic;
     private CoolerStatus? _beforeAutomatic;
     private int _beforeAutomaticTarget;
-    private int _lastAutomaticRpm = -1;
 
     private TemperatureScope SelectedScope => TemperatureSource.SelectedIndex == 0 ? TemperatureScope.CpuAndGpu : TemperatureScope.GpuOnly;
     private CoolingPreset SelectedPreset => CurvePreset.SelectedIndex == 0 ? CoolingPreset.Performance : CoolingPreset.Quiet;
@@ -39,7 +40,7 @@ public partial class MainWindow
             if (_closing) return;
             CpuTemperature.Text = _temperatures.Cpu is { } cpu ? $"{cpu.Celsius:F0}°C" : "—";
             GpuTemperature.Text = _temperatures.Gpu is { } gpu ? $"{gpu.Celsius:F0}°C" : "—";
-            SensorDescription.Text = (_temperatures.Cpu != null, _temperatures.Gpu != null) switch
+            SensorDescription.Text = _temperatures.CpuElevationRequired ? "CPU 온도에 관리자 권한 필요" : (_temperatures.Cpu != null, _temperatures.Gpu != null) switch
             {
                 (true, true) => "CPU/GPU 온도 수집 중",
                 (false, true) => "CPU 센서 없음 · GPU 기준 사용 가능",
@@ -81,11 +82,8 @@ public partial class MainWindow
             AutoState.Text = decision.Temperature is { } value
                 ? $"기준 {value:F0}°C → {decision.Rpm:N0} RPM · {decision.Description}"
                 : $"{decision.Rpm:N0} RPM · {decision.Description}";
-            if (_lastAutomaticRpm != decision.Rpm || status.Speed.TargetRpm != decision.Rpm)
-            {
-                await connection.SetAutomaticRpmAsync(decision.Rpm);
-                _lastAutomaticRpm = decision.Rpm;
-            }
+            // Refresh the volatile target each control tick, including while the motor ramps.
+            await connection.SetAutomaticRpmAsync(decision.Rpm);
         }
         finally { _automaticGate.Release(); UpdateControls(); }
     }
@@ -99,7 +97,7 @@ public partial class MainWindow
         try
         {
             await connection.EnterAutomaticAsync();
-            _thermalControl.Reset(); _lastAutomaticRpm = -1; _automatic = true;
+            _thermalControl.Reset(); _automatic = true;
             await AutomaticStepAsync();
         }
         catch
@@ -145,7 +143,31 @@ public partial class MainWindow
             stopping ? "자동 제어를 중지하고 이전 설정을 복원했습니다." : "온도 기반 자동 제어를 시작했습니다.");
     }
 
-    private void OnAutomaticSettingsChanged(object sender, SelectionChangedEventArgs e) { _thermalControl.Reset(); if (AutoButton != null) UpdateControls(); }
+    private void OnAutomaticSettingsChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _thermalControl.Reset();
+        if (AutoButton == null) return;
+        if (!_automatic) AutoState.Text = "온도 센서를 확인하고 있습니다.";
+        UpdateControls();
+    }
+
+    private async void OnCpuPermissionClick(object sender, RoutedEventArgs e)
+    {
+        bool started = false;
+        await RunActionAsync(async () =>
+        {
+            if (_automatic) await StopAutomaticAsync();
+            string executable = Environment.ProcessPath ?? throw new IOException("실행 파일 경로를 확인할 수 없습니다.");
+            using var process = Process.Start(new ProcessStartInfo(executable)
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                WorkingDirectory = AppContext.BaseDirectory
+            }) ?? throw new IOException("관리자 권한 앱을 시작하지 못했습니다.");
+            started = true;
+        }, "CPU 온도 확인 권한으로 다시 실행합니다.");
+        if (started) Close();
+    }
 
     private void UpdateAutomaticControls(bool connected)
     {
@@ -153,8 +175,10 @@ public partial class MainWindow
         AutoButton.IsEnabled = connected && !_busy && !_closing && (_automatic || SensorsReady());
         TemperatureSource.IsEnabled = !_busy && !_closing;
         CurvePreset.IsEnabled = !_busy && !_closing;
+        CpuPermissionButton.Visibility = _temperatures.CpuElevationRequired ? Visibility.Visible : Visibility.Collapsed;
+        CpuPermissionButton.IsEnabled = !_busy && !_closing;
         if (!_automatic && !SensorsReady()) AutoState.Text = SelectedScope == TemperatureScope.CpuAndGpu
-            ? "CPU 센서가 필요합니다. GPU 기준을 선택할 수도 있습니다."
+            ? _temperatures.CpuElevationRequired ? "CPU 온도 권한을 허용한 뒤 시작해 주세요." : "CPU 센서가 필요합니다. GPU 기준을 선택할 수도 있습니다."
             : "GPU 온도 센서를 기다리고 있습니다.";
         else if (!_automatic && AutoState.Text.Contains("센서"))
             AutoState.Text = SelectedScope == TemperatureScope.CpuAndGpu ? "CPU/GPU 중 높은 온도 기준 · 시작 준비됨" : "GPU 온도 기준 · 시작 준비됨";

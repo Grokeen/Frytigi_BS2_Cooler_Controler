@@ -31,10 +31,23 @@ internal static class Program
                 if (badge != "USB 연결됨" || rpm == "—" || !enabled) throw new Exception("Live UI did not become ready.");
                 if (!temperature.Contains("°C")) throw new Exception("Live GPU temperature was not displayed.");
                 Console.WriteLine("Live GPU temperature: " + temperature);
-                bool exerciseAutomatic = args.Contains("--automatic");
+                bool cpuGpu = args.Contains("--cpu-gpu");
+                string cpuTemperature = ((TextBlock)window.FindName("CpuTemperature")).Text;
+                if (cpuGpu && !cpuTemperature.Contains("°C")) throw new Exception("Live CPU temperature was not displayed.");
+                Console.WriteLine("CPU temperature: " + cpuTemperature);
+                if (args.Contains("--expect-elevation"))
+                {
+                    if (((Button)window.FindName("CpuPermissionButton")).Visibility != Visibility.Visible)
+                        throw new Exception("CPU permission button was not displayed.");
+                    if (((Button)window.FindName("AutoButton")).IsEnabled)
+                        throw new Exception("CPU/GPU automatic mode allowed missing CPU data.");
+                    Console.WriteLine("PASS: CPU permission prompt and unavailable CPU/GPU control lockout.");
+                }
+                bool exerciseAutomatic = args.Contains("--automatic") || cpuGpu;
                 string baselineTarget = ((TextBlock)window.FindName("TargetRpm")).Text;
                 if (args.Contains("--close-during-start"))
                 {
+                    if (!cpuGpu) ((ComboBox)window.FindName("TemperatureSource")).SelectedIndex = 1;
                     ((Button)window.FindName("AutoButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     window.Close();
                     window.Close();
@@ -51,7 +64,7 @@ internal static class Program
                 }
                 if (exerciseAutomatic)
                 {
-                    ((ComboBox)window.FindName("TemperatureSource")).SelectedIndex = 1;
+                    ((ComboBox)window.FindName("TemperatureSource")).SelectedIndex = cpuGpu ? 0 : 1;
                     ((TabControl)window.FindName("ControlTabs")).SelectedIndex = 1;
                     var automatic = (Button)window.FindName("AutoButton");
                     automatic.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

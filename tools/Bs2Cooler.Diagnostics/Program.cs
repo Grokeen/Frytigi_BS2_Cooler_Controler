@@ -12,7 +12,7 @@ try
         var reading = sensor.Read();
         Console.WriteLine(reading.Cpu is { } cpu ? $"CPU={cpu.Celsius:F1} C, source={cpu.Source}" : reading.CpuStatus);
         Console.WriteLine(reading.Gpu is { } gpu ? $"GPU={gpu.Celsius:F1} C, source={gpu.Source}, captured={gpu.CapturedAt:O}" : reading.GpuStatus);
-        return reading.Gpu == null ? 1 : 0;
+        return reading.Gpu == null || (args.Contains("--require-cpu") && reading.Cpu == null) ? 1 : 0;
     }
     if (operation is not ("scan" or "query" or "exercise" or "set" or "auto-exercise")) throw new ArgumentException("Use scan, query, thermal, auto-exercise, exercise, or set.");
     var devices = NativeHid.Enumerate();
@@ -33,17 +33,32 @@ try
     if (operation == "query") return 0;
     if (operation == "auto-exercise")
     {
-        if (status == null || status.IsSmart) throw new InvalidOperationException("Automatic exercise requires a manual-mode baseline.");
-        using var sensor = new NvidiaTemperatureReader();
-        var gpu = sensor.Read() ?? throw new IOException(sensor.Status);
-        var decision = new ThermalControl().Evaluate(new(null, gpu, "not used", sensor.Status), TemperatureScope.GpuOnly, CoolingPreset.Performance, status.MaximumRpm, DateTimeOffset.Now);
+        if (status == null || status.IsSmart || status.IsShutdown || gears[status.Gear - 1] != speed.TargetRpm)
+            throw new InvalidOperationException("Automatic exercise requires a running manual-mode baseline matching its stored gear speed.");
+        using var sensor = new TemperatureMonitor();
+        var sample = sensor.Read();
+        bool both = args.Contains("--cpu-gpu");
+        var now = DateTimeOffset.Now;
+        if (sample.Gpu?.IsUsable(now) != true || (both && sample.Cpu?.IsUsable(now) != true))
+            throw new IOException($"Required temperature unavailable. CPU: {sample.CpuStatus}; GPU: {sample.GpuStatus}");
+        var decision = new ThermalControl().Evaluate(sample, both ? TemperatureScope.CpuAndGpu : TemperatureScope.GpuOnly, CoolingPreset.Performance, status.MaximumRpm, now);
         try
         {
             await connection.EnterAutomaticAsync();
             await connection.SetAutomaticRpmAsync(decision.Rpm);
             var applied = await connection.ReadRpmAsync();
-            Console.WriteLine($"AUTOMATIC: measured GPU={gpu.Celsius} C -> recommended={decision.Rpm}, target={applied.TargetRpm}, actual={applied.ActualRpm}");
+            Console.WriteLine($"AUTOMATIC: CPU={sample.Cpu?.Celsius} C, GPU={sample.Gpu!.Celsius} C, scope={(both ? "CPU/GPU maximum" : "GPU only")} -> reference={decision.Temperature} C, recommended={decision.Rpm}, target={applied.TargetRpm}, actual={applied.ActualRpm}");
             if (applied.TargetRpm != decision.Rpm) throw new IOException("Automatic target was not applied.");
+            var settleUntil = DateTime.UtcNow.AddSeconds(35);
+            while (Math.Abs(applied.ActualRpm - decision.Rpm) > 150 && DateTime.UtcNow < settleUntil)
+            {
+                await Task.Delay(1000);
+                await connection.SetAutomaticRpmAsync(decision.Rpm);
+                applied = await connection.ReadRpmAsync();
+                Console.WriteLine($"RAMP: target={applied.TargetRpm}, actual={applied.ActualRpm}");
+            }
+            if (Math.Abs(applied.ActualRpm - decision.Rpm) > 150) throw new IOException("Actual automatic fan speed did not reach its target.");
+            Console.WriteLine($"SETTLED: target={applied.TargetRpm}, actual={applied.ActualRpm}");
         }
         finally
         {
@@ -53,7 +68,9 @@ try
             if (restored.TargetRpm != speed.TargetRpm) await connection.SetManualAsync(status.Gear, speed.TargetRpm);
             var saved = Bs2Protocol.ParseGearSpeeds(await connection.SendAsync(Bs2Protocol.Query(Bs2Command.GearSpeeds)));
             if (!saved.SequenceEqual(gears)) throw new IOException("Automatic control changed stored gear speeds.");
-            Console.WriteLine($"RESTORED: target={(await connection.ReadRpmAsync()).TargetRpm}, all four gear presets unchanged.");
+            int restoredTarget = (await connection.ReadRpmAsync()).TargetRpm;
+            if (restoredTarget != speed.TargetRpm) throw new IOException("Original target was not restored.");
+            Console.WriteLine($"RESTORED: target={restoredTarget}, all four gear presets unchanged.");
         }
         return 0;
     }

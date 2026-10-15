@@ -189,3 +189,57 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 업로드 제외: 제조사 추출 자료/원시 로그 `.analysis/`, 로컬 EXE/ZIP `artifacts/`, `bin/obj`.
 - CPU 실제 측정은 공식 센서 드라이버가 미설정이므로 아직 미검증. 현재 바로 사용할 수 있는 자동 제어는 GPU 기준이며 CPU 설정 안내는 자동 제어 상세 문서에 기록함.
 - 이 업로드 확인 기록은 후속 문서 커밋으로 동일 원격에 반영함. 보고서만 추가하며 이미 검증한 앱 소스/실행 파일은 변경하지 않음.
+
+## 2026-10-16 01:49:40 KST — 사용자 허용에 따른 CPU 센서 설치와 CPU/GPU 자동 제어 검증
+
+- 사용자 답변: **CPU/GPU 모두: 오픈소스 센서 설치·설정 허용**. 앞선 CPU 추가 설치 미허용/미검증 상태는 이 작업 전의 기록이다.
+- 결과: 공식 서명 PawnIO 2.2.0을 설치하고 Intel CPU Package 및 NVIDIA GPU 온도를 실제로 읽음. CPU/GPU 중 높은 온도에 따른 자동 제어와 실제 회전수 상승/기존 목표 복원을 확인함. 앱 버전 **0.2.1**.
+
+### 설치 출처와 변경 범위
+
+- 출처: [PawnIO 공식 사이트](https://pawnio.eu/), [공식 설치 릴리스 2.2.0](https://github.com/namazso/PawnIO.Setup/releases/tag/2.2.0).
+- 설치 파일: 공식 `PawnIO_setup.exe`, 크기 3,410,960바이트. GitHub 릴리스 자산에 게시된 SHA-256과 다운로드 파일의 해시 일치 확인.
+- 설치 파일 SHA-256: `1F519A22E47187F70A1379A48CA604981C4FCF694F4E65B734AAA74A9FBA3032`.
+- Authenticode `Valid`, 서명자 `namazso.eu`, 인증서 지문 `F380DCC9F706E2756A5047B832FFE719E1BC35F5`.
+- 사용자 허용에 따라 Windows 관리자 실행으로 `-install -silent` 실행, 종료 코드 **0**. 공식 기본판을 설치했으며 unrestricted 옵션은 사용하지 않음.
+- 설치 위치 `C:\Program Files\PawnIO`, 표시 버전 `2.2.0.0`. 드라이버 `PawnIO` 실행 상태, 시작 형식 `Manual`(공식 기본 설정).
+- 실제 드라이버는 Windows DriverStore의 `PawnIO.sys`. SHA-256 `FCA6E7D58B0CF38DBB913A2B9E532F48629145D395F454B16A9F58E97B8D3940`. Microsoft Windows Hardware Compatibility Publisher 서명 `Valid` 확인.
+- 제조사 폴더의 센서/드라이버를 재사용하지 않았으며 LibreHardwareMonitor 전체 라이브러리를 추가 설치하지 않음. 기존의 공개 서명 IntelMSR 모듈로 필요한 온도 레지스터만 읽음.
+
+### 앱 변경
+
+- 공식 드라이버는 일반 사용자 CPU 접근을 거부함을 확인. 드라이버의 접근 권한은 변경하지 않고 기본 설정 유지.
+- `IntelTemperatureReader.RequiresElevation` → 온도 스냅샷 → WPF에 권한 필요 상태를 전달함. CPU가 없는 경우와 권한 부족을 화면에서 구분.
+- **CPU 온도 권한으로 다시 실행** 버튼 추가. 버튼을 직접 누를 때만 Windows 관리자 실행을 요청함. 자동 제어가 진행 중이면 먼저 중지/원래 설정 복원 후 재실행.
+- 기본 온도 기준을 **CPU/GPU 중 더 높은 온도**로 설정. GPU 기준만 사용하는 선택지도 유지.
+- 자동 제어는 약 1초마다 임시 RPM `0x21`을 갱신하도록 조정. 수동 저장 속도를 반복 변경하지 않음.
+- 진단 도구에 `thermal --require-cpu`, `auto-exercise --cpu-gpu` 추가. 실제 회전수 수렴과 저장 속도/목표 복원도 확인.
+- UI 도구에 `--cpu-gpu`, `--expect-elevation` 추가. 사용 설명서와 현재 동작 문서를 갱신함.
+
+### 실물 검증 결과
+
+| 검사 | 실제 결과 |
+| --- | --- |
+| 최초 관리자 센서 조회 | CPU Package 72°C, NVIDIA GPU 49°C 읽기 성공 |
+| 일반 권한 WPF | CPU 값 없음/권한 버튼 표시, CPU/GPU 자동 시작 차단, GPU 49°C 표시, 레이아웃 통과 |
+| CPU/GPU 자동 명령 | CPU 78°C / GPU 50°C → 높은 CPU 온도 78°C 기준 → 목표 2700 RPM 적용 성공 |
+| 실제 회전수 | 약 1400 RPM에서 점진 상승해 **2600 RPM** 도달. 목표 2700 RPM의 진단 허용 오차 ±150 RPM 이내 확인 |
+| 중지/복원 | 기존 목표 **1400 RPM** 복원, 저장 속도 **1400,2400,2700,2700** 유지 |
+| CPU/GPU WPF | CPU 60°C / GPU 49°C → 목표 2400 RPM 표시, 자동 시작/수동 차단/중지/기존 목표 복원 및 최소 크기 레이아웃 통과 |
+| 원본 의존성 | 최종 조회 시 Flydigi/Space Station 서비스 0개, 원본 폴더 프로세스 0개. 해당 제거 작업을 이번에 수행하지 않았으며 조회 결과만 기록 |
+
+- 초기 진단은 수렴 제한이 7초여서 실제 회전수가 목표 범위에 들어오기 전에 실패함. 실패 시에도 `finally`에서 기존 목표와 저장 속도 복원을 확인함. 팬의 완만한 가속을 관찰하도록 최대 35초로 조정하고 1초마다 임시 목표를 갱신하는 검사로 재실행해 통과함. 이 기록은 목표 설정 ACK만으로 실제 회전수 도달을 단정하지 않음.
+- 관리자 실기 검증 로그 `.analysis/cpu-gpu-verification.txt`, WPF 화면 `.analysis/cpu-gpu-ui-preview.png`, 일반 권한 화면 `.analysis/cpu-permission-ui.png`에 로컬 보관. 두 화면을 열어 표시/레이아웃을 확인함.
+- `dotnet build Bs2Cooler.sln -c Release`: 성공, 경고 **0개**, 오류 **0개**.
+- `dotnet run --project tests/Bs2Cooler.Tests -c Release --no-build`: **24개 통과**.
+- QC/PD 전원 및 재부팅 후 드라이버 로드 상태는 이번 실물 검증에 포함하지 않음. 현재 PC의 일반 전원/USB와 설치 직후 실행 상태를 확인한 결과임.
+- 앱/게시 스크립트에 드라이버 설치·시작이나 인터넷 통신을 추가하지 않음. 이번 설치는 사용자가 별도로 허용한 환경 구성 작업이며 설치 파일과 원시 로그는 Git/배포 ZIP에 포함하지 않음.
+- 남은 마무리: 변경 검토, 커밋/원격 푸시, 커밋 식별자가 포함된 EXE/ZIP 게시와 실행 확인. 실제 결과는 다음 기록에 추가함.
+
+## 2026-10-16 01:52:00 KST — 권한 안내 및 GPU 기준 회귀 검증
+
+- CPU/GPU에서 GPU 기준으로 바꿀 때 이전 CPU 권한 안내가 남지 않도록 선택 변경 시 센서 준비 메시지를 다시 계산함.
+- 최종 코드 Release 빌드 성공, 경고/오류 0개, 프로토콜/온도 테스트 24개 통과.
+- 일반 권한 `Bs2Cooler.UiSmoke --expect-elevation --automatic`: CPU 권한 버튼/CPU 누락 시 시작 차단 확인 후 GPU 기준으로 변경 → 실측 51°C/목표 2100 RPM → 시작/중지/기존 목표 복원 통과.
+- 앞서 통과한 관리자 CPU/GPU 실기 및 WPF 시험과 함께, CPU 드라이버 설치 후에도 일반 권한 GPU 제어가 유지됨을 확인함.
+- Git 변경 파일/공백 검토 통과. 최종 배포본과 원격 업로드 결과는 다음 기록에 추가함.
