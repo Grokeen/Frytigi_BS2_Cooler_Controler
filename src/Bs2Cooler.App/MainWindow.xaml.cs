@@ -24,20 +24,23 @@ public partial class MainWindow : Window
     private bool _draftInitialized;
     private int _failures;
 
-    public MainWindow()
+    public MainWindow() : this(false) { }
+    public MainWindow(bool trayMode)
     {
         InitializeComponent();
+        ConfigureDesktopMode(trayMode);
         InitializeTemperatureMonitoring();
         _timer.Tick += async (_, _) =>
         {
             if (_busy || _polling || _closing) return;
             if (_connection == null) await ConnectAsync();
             else await PollAsync();
+            await TryStartupAutomaticAsync();
         };
         UpdateControls();
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e) { await ConnectAsync(); _timer.Start(); }
+    private async void OnLoaded(object sender, RoutedEventArgs e) => await InitializeDesktopAsync();
 
     private async Task ConnectAsync()
     {
@@ -189,6 +192,7 @@ public partial class MainWindow : Window
 
     private async Task ApplyAsync()
     {
+        _startupAutomaticPending = false;
         if (!int.TryParse(RpmInput.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int rpm)) { StatusText.Text = "RPM을 숫자로 입력해 주세요."; return; }
         var connection = _connection;
         if (connection == null) return;
@@ -257,6 +261,7 @@ public partial class MainWindow : Window
     {
         if (_closeReady) return;
         e.Cancel = true;
+        if (_trayMode && !_exitRequested) { HideToTray(); return; }
         if (_closing) return;
         _closing = true; _timer.Stop(); UpdateControls();
         _temperatureTimer.Stop();

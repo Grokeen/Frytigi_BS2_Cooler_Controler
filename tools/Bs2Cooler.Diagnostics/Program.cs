@@ -6,6 +6,23 @@ Console.OutputEncoding = Encoding.UTF8;
 try
 {
     string operation = args.FirstOrDefault() ?? "query";
+    if (operation == "desktop-exercise") { await DesktopSmoke.RunAsync(); return 0; }
+    if (operation == "startup")
+    {
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { Enabled = StartupTaskManager.IsEnabled(), StartupTaskManager.TaskName, StartupTaskManager.InstalledExecutable, Preferences = DesktopPreferencesStore.Load() }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        return 0;
+    }
+    if (operation.StartsWith("desktop"))
+    {
+        if (operation == "desktop")
+        {
+            var desktop = DesktopIpc.ReadStatus();
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(desktop, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            return desktop == null ? 1 : 0;
+        }
+        DesktopCommand command = operation switch { "desktop-show" => DesktopCommand.Show, "desktop-hide" => DesktopCommand.Hide, "desktop-quit" => DesktopCommand.Exit, "desktop-close" => DesktopCommand.CloseToTray, _ => throw new ArgumentException("Unknown desktop command.") };
+        return DesktopIpc.Send(command, out _) ? 0 : 1;
+    }
     if (operation == "thermal")
     {
         using var sensor = new TemperatureMonitor();

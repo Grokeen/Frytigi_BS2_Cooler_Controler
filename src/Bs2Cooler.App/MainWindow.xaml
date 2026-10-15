@@ -1,6 +1,6 @@
 <Window x:Class="Bs2Cooler.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="BS2 Cooler"
-        Width="850" Height="800" MinWidth="760" MinHeight="780" Background="#0E1622"
+        Width="850" Height="800" MinWidth="760" MinHeight="780" Background="#0E1622" Icon="Assets/Bs2Cooler.ico"
         Foreground="#EDF4FF" FontFamily="Malgun Gothic, Segoe UI" FontSize="13"
         WindowStartupLocation="CenterScreen" Loaded="OnLoaded" Closing="OnClosing">
   <Grid Margin="28,24">

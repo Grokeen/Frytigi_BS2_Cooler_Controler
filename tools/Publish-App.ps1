@@ -8,12 +8,14 @@ $output = Join-Path $workspace 'artifacts\Bs2Cooler-win-x64'
 if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
 Copy-Item -LiteralPath (Join-Path $workspace 'docs\User-Guide.ko.txt') -Destination (Join-Path $output 'User-Guide.ko.txt') -Force
 Copy-Item -LiteralPath (Join-Path $workspace 'THIRD_PARTY_NOTICES.txt') -Destination (Join-Path $output 'THIRD_PARTY_NOTICES.txt') -Force
+Copy-Item -LiteralPath (Join-Path $workspace 'tools\Install-Desktop.ps1') -Destination (Join-Path $output 'Install-Desktop.ps1') -Force
+Copy-Item -LiteralPath (Join-Path $workspace 'assets\Bs2Cooler.ico'),(Join-Path $workspace 'assets\Bs2Cooler.png'),(Join-Path $workspace 'assets\Bs2Cooler.svg') -Destination $output -Force
 $moduleDestination = Join-Path $output 'third_party\PawnIO.Modules'
 [void][IO.Directory]::CreateDirectory($moduleDestination)
 Copy-Item -LiteralPath (Join-Path $workspace 'third_party\PawnIO.Modules\0.2.11') -Destination $moduleDestination -Recurse -Force
 $executable = Join-Path $output 'Bs2Cooler.exe'
 $hash = Get-FileHash -LiteralPath $executable -Algorithm SHA256
 [IO.File]::WriteAllText((Join-Path $output 'SHA256SUMS.txt'), "$($hash.Hash)  Bs2Cooler.exe`r`n", [Text.UTF8Encoding]::new($false))
-Compress-Archive -LiteralPath $executable,(Join-Path $output 'User-Guide.ko.txt'),(Join-Path $output 'SHA256SUMS.txt'),(Join-Path $output 'THIRD_PARTY_NOTICES.txt'),(Join-Path $output 'third_party') -DestinationPath (Join-Path $workspace 'artifacts\Bs2Cooler-win-x64.zip') -Force
+Compress-Archive -LiteralPath $executable,(Join-Path $output 'User-Guide.ko.txt'),(Join-Path $output 'SHA256SUMS.txt'),(Join-Path $output 'THIRD_PARTY_NOTICES.txt'),(Join-Path $output 'third_party'),(Join-Path $output 'Install-Desktop.ps1'),(Join-Path $output 'Bs2Cooler.ico'),(Join-Path $output 'Bs2Cooler.png'),(Join-Path $output 'Bs2Cooler.svg') -DestinationPath (Join-Path $workspace 'artifacts\Bs2Cooler-win-x64.zip') -Force
 Get-Item -LiteralPath $executable,(Join-Path $workspace 'artifacts\Bs2Cooler-win-x64.zip') | Select-Object FullName,Length
 Write-Output "SHA256: $($hash.Hash)"

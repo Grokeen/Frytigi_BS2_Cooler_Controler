@@ -3,11 +3,17 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>Bs2Cooler</AssemblyName>
     <Product>BS2 Cooler</Product>
     <Description>Standalone local USB control for BS2 Pro</Description>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
+    <ApplicationIcon>../../assets/Bs2Cooler.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../Bs2Cooler.Windows/Bs2Cooler.Windows.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms"/><Using Remove="System.Drawing"/>
+    <Resource Include="../../assets/Bs2Cooler.ico" Link="Assets/Bs2Cooler.ico"/>
+  </ItemGroup>
 </Project>

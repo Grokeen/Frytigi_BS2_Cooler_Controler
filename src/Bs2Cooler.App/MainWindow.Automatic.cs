@@ -138,6 +138,7 @@ public partial class MainWindow
 
     private async void OnAutomaticClick(object sender, RoutedEventArgs e)
     {
+        _startupAutomaticPending = false;
         bool stopping = _automatic;
         await RunActionAsync(stopping ? StopAutomaticAsync : StartAutomaticAsync,
             stopping ? "자동 제어를 중지하고 이전 설정을 복원했습니다." : "온도 기반 자동 제어를 시작했습니다.");
@@ -147,6 +148,7 @@ public partial class MainWindow
     {
         _thermalControl.Reset();
         if (AutoButton == null) return;
+        SaveDesktopSelection();
         if (!_automatic) AutoState.Text = "온도 센서를 확인하고 있습니다.";
         UpdateControls();
     }
@@ -162,11 +164,12 @@ public partial class MainWindow
             {
                 UseShellExecute = true,
                 Verb = "runas",
+                Arguments = "--replace " + Environment.ProcessId,
                 WorkingDirectory = AppContext.BaseDirectory
             }) ?? throw new IOException("관리자 권한 앱을 시작하지 못했습니다.");
             started = true;
         }, "CPU 온도 확인 권한으로 다시 실행합니다.");
-        if (started) Close();
+        if (started) await RequestExitAsync();
     }
 
     private void UpdateAutomaticControls(bool connected)
