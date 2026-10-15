@@ -542,3 +542,15 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 기존 앱을 정상 종료한 후 같은 최상위 EXE를 관리자 `--background --startup`으로 시작해 PID **34852**, Connected/Automatic/Elevated/Initialized/Tray **true**, CPU **59°C**/GPU **45°C** 수집 확인. 파일 이름을 바꾼 실제 단일 EXE가 독립적으로 초기화됨을 확인함.
 - 시험 종료 시 자체 정상 종료/팬 설정 복원 후 기존 로그인 예약 작업을 다시 실행함. 사용자 AutoStartCooling On/CPU·GPU 기준 설정을 유지함. CPU 권한이 없는 일반 실행의 재실행 버튼 동작은 기존 기능이며 이번 시험은 관리자 실행 조건임.
 - 원시 cold-start JSON은 `.analysis/root-exe-cold-start.json`에만 보관함. GitHub CI/새 Release/최종 소스 해시는 실제 완료 후 추가 기록함.
+
+## 2026-10-16 04:07:05 KST — 0.4.4 게시 결과 및 GitHub 공백 정규화 보완
+
+- [PR #10](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/10) head **`0cd51fbe34eea8add43026ab5bc2a0b4e2e57840`**, [Windows 빌드 38790278372](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38790278372) success 확인 후 예상 head를 지정해 병합함. 병합/0.4.4 배포 소스 **`6cb8fd5c21b659e4d9d8c4b52323ea36225f8fb3`**.
+- [Windows release 38790515822](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38790515822) success. 원격 로그에서 경고/오류 0개, 테스트 40개와 최상위/패키지 해시 검사 통과 확인. [v0.4.4](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.4) 게시 **2026-10-16 04:03:38 KST**.
+- 로컬 최상위/게시/설치 EXE **474,088바이트**, SHA-256 **`8766D8A5F3FA091194DE5555F6CC65CC94DF853CB5E7B2BB638B5A1782966B47`**. 로컬 ZIP **402,870바이트**, SHA-256 **`AD74251E9478EC0170E988F10C72119EE308243FA65BCAEDD548072BE10C2B88`**. 보호된 기존 설치 경로로 0.4.4 설치 후 최상위 EXE로 해당 창 열기를 재검증함. Automatic true/CPU 65°C/GPU 45°C, 자동 실행 선택 On 유지.
+- 초기 공개 다운로드 검증에서 요청한 공백 이름의 asset이 없어 실패함. 실제 목록을 조회하니 GitHub가 **BS.Pro.Controller.exe**로 정규화함. name을 원래 공백 포함 값으로 PATCH해도 점 이름이 유지되고 label만 **BS Pro Controller.exe**로 반영됨. EXE/ZIP/태그를 삭제하거나 덮어쓰지 않음.
+- 정규화된 URL에서 실제 다운로드 후 검증 성공. GitHub EXE/최상위 실행기 자산 **474,093바이트**, SHA-256 **`8B999D9B737239311BDCE73A65BAC628F9A84E2FA72681DFDACF4435E7189D6D`**. GitHub ZIP **408,801바이트**, SHA-256 **`9FB7053DD0466DA82B4900342491AA7F4FA74D853517CB6522B1F759495BB2BE`**. 제품 버전 **0.4.4+6cb8fd5c21b659e4d9d8c4b52323ea36225f8fb3**, ZIP 내부/외부 EXE manifest 해시 일치.
+- [GitHub 공식 자산 문서](https://docs.github.com/en/rest/releases/assets#upload-a-release-asset)에서 특수 문자 파일명 정규화를 확인함. [gh release create 문서](https://cli.github.com/manual/gh_release_create)의 `#label` 구문으로 향후 표시명을 지정함. 이는 GitHub 제약이며 프로젝트 최상위 파일명은 정확히 요청한 공백 이름을 유지함.
+- **0.4.5** 보완: ZIP 내부에도 정확한 **BS Pro Controller.exe**를 추가, ZIP 내 설치용 사본과 동일 해시 검사 추가, 외부 manifest에 공백/점 두 이름 기록, Release label 자동 지정. README/안내/AGENTS에 원래 이름을 보존하는 ZIP 실행 방법을 명시함.
+- 보완 후 Release 전체 빌드 **경고 0/오류 0**, 기존 **40개 테스트**와 최상위·ZIP 내 두 실행기·게시 EXE 해시 검사 통과. 변경은 패키징/문서/버전이며 온도/USB 제어 코드는 그대로임.
+- 프로필에는 기존 Pull Shark/Quickdraw가 표시됨. 신규 획득/등급 상승을 확인한 것으로 기록하지 않음. 새 0.4.5 CI/배포/최종 설치는 수행 후 기록함.

@@ -1,5 +1,13 @@
 # BS2 Cooler 구현 및 검증 기록
 
+## 0.4.5 — GitHub 파일명 정규화 대응
+
+0.4.4의 실제 Release 검증에서 GitHub가 공백을 점으로 바꿔 `BS.Pro.Controller.exe`로 저장하는 것을 확인했다.
+자산 name을 다시 지정해도 같았고 표시 label만 원래 이름을 보존했다. ZIP에도 **BS Pro Controller.exe**를
+포함해 정확한 이름으로 실행할 수 있게 보완했다. Release 자산에는 label을 지정하고 해시 manifest에는
+공백/점 두 이름을 기록한다. 최상위 EXE·ZIP 내 두 실행 파일·게시 EXE 해시 검사를 통과했다.
+기존 0.4.4 태그/ZIP/EXE를 덮어쓰지 않고 새 버전으로 게시한다.
+
 ## 0.4.4 — 프로젝트 최상위 실행기
 
 게시 스크립트가 프로젝트 최상위에 실제 `BS Pro Controller.exe`를 생성하고, 패키지/설치용

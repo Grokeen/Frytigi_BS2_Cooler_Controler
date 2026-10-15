@@ -1,4 +1,4 @@
-BS2 Cooler 0.4.4
+BS2 Cooler 0.4.5
 
 Windows용 BS2 Pro USB 쿨러 제어 앱입니다.
 
@@ -6,6 +6,7 @@ Windows용 BS2 Pro USB 쿨러 제어 앱입니다.
 - 최상위 폴더의 'BS Pro Controller.exe'를 실행합니다. 하위 artifacts 폴더로 들어갈 필요가 없습니다.
 - tools/Publish-App.ps1을 실행할 때마다 최신 단일 EXE 게시본으로 갱신합니다.
 - GitHub Release에서도 'BS Pro Controller.exe'를 받을 수 있습니다. 소스만 복제한 폴더에서는 게시 스크립트로 생성합니다.
+- GitHub의 직접 EXE 다운로드명은 공백 대신 점을 쓰는 BS.Pro.Controller.exe입니다. ZIP 안에는 원래 이름인 BS Pro Controller.exe가 그대로 들어 있습니다.
 - 이미 실행 중인 앱이 있으면 해당 창을 엽니다. CPU 센서 권한 안내가 보이면 관리자 재실행 버튼을 사용합니다.
 - ZIP의 설치용 파일명은 Bs2Cooler.exe입니다. 상세 문서와 외부 구성요소의 소스/라이선스는 ZIP 또는 저장소에서 확인합니다.
 

@@ -38,3 +38,4 @@
 - 사용자는 프로젝트 폴더를 열자마자 실행기를 찾을 수 있도록 최상위에 `BS Pro Controller.exe`를 두도록 요청했다.
 - `tools/Publish-App.ps1`로 단일 EXE 게시본을 해당 이름으로 갱신하고 패키지 사본과 해시가 같은지 검사한다.
 - 생성 EXE는 Git에서 제외하고 GitHub Release 자산으로 같은 이름을 제공한다. 파일명/폴더 위치를 임의로 바꾸지 않는다.
+- GitHub는 공백을 점으로 바꾸므로 직접 다운로드 자산명은 `BS.Pro.Controller.exe`가 된다. 표시 label과 ZIP 내부에는 정확한 `BS Pro Controller.exe`를 보존하고 두 다운로드 이름의 해시를 함께 기록한다.

@@ -1,5 +1,10 @@
 BS2 Pro를 제조사 앱/서비스 없이 USB로 직접 제어하는 Windows WPF 앱입니다.
 
+0.4.5 변경: ZIP 안에도 정확한 파일명의 'BS Pro Controller.exe'를 포함했습니다.
+GitHub가 직접 업로드한 EXE의 공백을 점으로 바꾸므로 직접 다운로드명은 BS.Pro.Controller.exe이며,
+표시명은 BS Pro Controller.exe입니다. 파일명을 그대로 사용하려면 ZIP을 풀어 실행합니다.
+해시 파일에는 두 이름을 함께 기록합니다.
+
 0.4.4 변경: 프로젝트 최상위에 'BS Pro Controller.exe'를 생성합니다.
 게시 스크립트 실행 시 최신 단일 EXE로 갱신하고 GitHub Release에도 같은 이름으로 제공합니다.
 ZIP/설치용 Bs2Cooler.exe와 같은 바이너리이며 해시 파일에 두 이름을 함께 기록합니다.
