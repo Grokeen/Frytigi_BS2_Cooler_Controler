@@ -4,6 +4,8 @@
 
 [날짜·시간별 작업 보고서](docs/WORK_LOG.md)
 
+[GitHub Release 다운로드](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/latest)
+
 조이트론/플라이디지 BS2 Pro의 USB 쿨러 제어 기능만 구현한 독립 WPF 앱입니다.
 제조사 EXE·DLL·서비스와 외부 NuGet 패키지를 사용하지 않고 Windows HID API로 직접 통신합니다.
 0.2.0부터 온도 기반 자동 제어를 지원합니다. GPU는 기존 NVIDIA 드라이버에서 읽고,
@@ -96,6 +98,8 @@ EXE와 SHA-256 및 ZIP 패키지 생성:
 GitHub에서는 PR과 main 변경마다 Windows runner에서 Release 빌드, 34개 장치 없는 테스트,
 동일 게시 스크립트의 ZIP 생성을 수행합니다. 성공한 Actions 실행의 **Artifacts**에서 패키지를 받습니다.
 원격 runner는 실제 USB 장치/CPU 센서를 사용한 실기 검증을 수행하지 않습니다.
+버전 태그는 다시 빌드/검증한 ZIP과 SHA-256을 Release에 게시합니다.
+[GitHub 빌드·배포 방법](docs/RELEASING.ko.md)
 
 로그인 자동 실행 설치는 관리자 PowerShell에서 `.\tools\Install-Desktop.ps1`을 실행합니다.
 
