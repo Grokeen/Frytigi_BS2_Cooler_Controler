@@ -22,9 +22,13 @@ Intel CPU는 별도 설정된 공식 PawnIO 드라이버가 있을 때 공개 �
 
 ## 실행
 
+**프로젝트 폴더를 열고 최상위의 `BS Pro Controller.exe`를 실행하세요.**
+`tools/Publish-App.ps1`을 실행하면 이 파일을 최신 Release 게시본으로 갱신합니다.
+이 실행 파일은 빌드 결과물이므로 Git에는 소스를 올리고, EXE는 [GitHub Release](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/latest)에 같은 이름으로 게시합니다.
+
 이 PC에서는 바탕화면/시작 메뉴의 **BS2 Cooler** 바로가기 또는
 `C:\Program Files\BS2 Cooler\Bs2Cooler.exe`를 실행하면 됩니다. 로그인 후에는 트레이에서 실행됩니다.
-개발용 배포본은 [Bs2Cooler.exe](artifacts/Bs2Cooler-win-x64/Bs2Cooler.exe)입니다.
+최상위 실행기는 단일 EXE 게시본이며, 패키지/설치용 사본은 [Bs2Cooler.exe](artifacts/Bs2Cooler-win-x64/Bs2Cooler.exe)입니다.
 이동/보관에는 [ZIP 패키지](artifacts/Bs2Cooler-win-x64.zip)를 사용합니다.
 Windows와 Microsoft .NET Desktop Runtime 9 (x64)가 필요합니다. 현재 PC에는 설치되어 있습니다.
 

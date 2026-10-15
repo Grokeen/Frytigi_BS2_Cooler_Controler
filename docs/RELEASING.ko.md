@@ -15,7 +15,9 @@ git push origin v0.4.0
 `Windows release` 작업은 태그와 앱 버전의 일치를 확인하고 다시 빌드/테스트합니다.
 `tools/Publish-App.ps1`은 사용 설명서/상세 문서/아이콘/외부 고지를 ZIP에 포함하고
 `tools/Test-Package.ps1`로 필수 파일, 중복/상위 경로, ZIP 내부 EXE와 해시의 일치를 확인합니다.
-성공하면 ZIP과 `RELEASE-SHA256SUMS.txt`를 GitHub Release에 게시합니다.
+게시할 때 프로젝트 최상위에 **BS Pro Controller.exe**를 생성하고 패키지 EXE와 해시가 같은지 검사합니다.
+성공하면 `BS Pro Controller.exe`, ZIP과 `RELEASE-SHA256SUMS.txt`를 GitHub Release에 게시합니다.
+파일명에 공백이 있으므로 PowerShell에서는 `& '.\BS Pro Controller.exe'`로 실행합니다.
 태그 작업에만 contents 쓰기 권한을 부여하며 개인 토큰을 저장하지 않습니다.
 
 기존 태그/Release 자산을 자동 덮어쓰지 않습니다. 게시 재실행은 이미 Release가 있으면 실패하므로

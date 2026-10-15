@@ -39,6 +39,7 @@ jobs:
         with:
           name: Bs2Cooler-win-x64
           path: |
+            BS Pro Controller.exe
             artifacts/Bs2Cooler-win-x64.zip
             artifacts/Bs2Cooler-win-x64/SHA256SUMS.txt
           if-no-files-found: error

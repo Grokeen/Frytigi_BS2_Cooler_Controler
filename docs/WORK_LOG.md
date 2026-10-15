@@ -528,3 +528,17 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 사용자 설정 **AutoStartCooling true/CPU·GPU 중 높은 값/성능** 및 로그인 예약 작업 유지. UI 변경으로 70°C 목표, 60°C부터 최대 풍량/57°C 미만 해제, 센서 보호/복원 정책을 변경하지 않음.
 - 프로필에는 기존 **Pull Shark/Quickdraw** 두 종류가 계속 표시됨. 실제 기능 PR을 정상 병합했으며 새 배지 획득/등급 상승으로 기록하지 않음.
 - 이 최종 결과는 후속 문서 PR에서 빌드 검증 후 main에 반영함. 최종 main의 문서 커밋과 배포/설치 소스 커밋은 구분함. 원시 로그·개인 설정·렌더링·다운로드는 `.analysis/`/`artifacts/`에만 보관하며 Git에 올리지 않음.
+
+## 2026-10-16 04:00:03 KST — 프로젝트 최상위 BS Pro Controller.exe 생성/실행 확인
+
+- 사용자 요청: 프로젝트 폴더에 들어가자마자 실행 파일을 찾을 수 있도록 최상위에 배치하고 이름을 **BS Pro Controller.exe**로 지정.
+- `Publish-App.ps1`이 단일 EXE 게시본을 프로젝트 최상위의 요청한 이름으로 복사/갱신하도록 수정함. `Test-Package.ps1`에서 최상위 파일 존재와 게시/ZIP EXE와의 SHA-256 일치를 검사함.
+- GitHub build/release의 산출물에 최상위 EXE를 추가하고 Release에도 같은 파일명으로 게시하도록 수정함. Release manifest는 ZIP/기존 패키지 EXE/요청한 EXE 이름을 각각 기록함. 바이너리는 Git에 직접 넣지 않고 Release에 올리며 `.gitignore`에 최상위 EXE만 정확히 지정함.
+- 버전 csproj/manifest/사용 설명서/외부 고지 **0.4.4**. README·Release 안내·구현 문서와 AGENTS의 지속 실행기 규칙을 갱신함. 내부 어셈블리명과 설치 경로, 창 제목/IPC, 센서·USB·RGB·자동 제어 코드는 바꾸지 않음.
+- 첫 파일 패치에서 manifest의 실제 assemblyIdentity 이름과 예상 문맥이 달라 적용이 거절됨. 변경이 적용되지 않은 상태를 확인하고 실제 문맥으로 다시 적용함. 빌드 실패로 기록할 사항은 아님.
+- `dotnet build Bs2Cooler.sln -c Release`: **경고 0/오류 0**. 기존 프로토콜/온도/RGB **40개 모두 통과**. `Publish-App.ps1`/ZIP 필수 파일·안전 경로·해시·최상위 사본 검사 통과.
+- 최상위 EXE **474,088바이트**, 개발 검증 해시 `31D577F22D129F3C62FAEEBA96C54898B7ABFB64685B165D7871F6BF5B820413`. 미커밋 검증 단계의 파일이며 최종 병합 소스로 다시 게시함.
+- 실제 최상위 EXE의 공백 포함 경로 실행 exit **0**. 기존 PID **14748**을 유지하면서 숨겨 둔 창이 열리고 Automatic true인 것을 확인함. 중복 컨트롤러를 만들지 않음.
+- 기존 앱을 정상 종료한 후 같은 최상위 EXE를 관리자 `--background --startup`으로 시작해 PID **34852**, Connected/Automatic/Elevated/Initialized/Tray **true**, CPU **59°C**/GPU **45°C** 수집 확인. 파일 이름을 바꾼 실제 단일 EXE가 독립적으로 초기화됨을 확인함.
+- 시험 종료 시 자체 정상 종료/팬 설정 복원 후 기존 로그인 예약 작업을 다시 실행함. 사용자 AutoStartCooling On/CPU·GPU 기준 설정을 유지함. CPU 권한이 없는 일반 실행의 재실행 버튼 동작은 기존 기능이며 이번 시험은 관리자 실행 조건임.
+- 원시 cold-start JSON은 `.analysis/root-exe-cold-start.json`에만 보관함. GitHub CI/새 Release/최종 소스 해시는 실제 완료 후 추가 기록함.
