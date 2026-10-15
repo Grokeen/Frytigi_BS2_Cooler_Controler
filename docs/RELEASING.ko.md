@@ -17,6 +17,9 @@ git push origin v0.4.0
 `tools/Test-Package.ps1`로 필수 파일, 중복/상위 경로, ZIP 내부 EXE와 해시의 일치를 확인합니다.
 게시할 때 프로젝트 최상위에 **BS Pro Controller.exe**를 생성하고 패키지 EXE와 해시가 같은지 검사합니다.
 성공하면 `BS Pro Controller.exe`, ZIP과 `RELEASE-SHA256SUMS.txt`를 GitHub Release에 게시합니다.
+GitHub는 공백을 점으로 바꾸므로 asset name은 `BS.Pro.Controller.exe`, label은 `BS Pro Controller.exe`입니다.
+ZIP에는 원래 공백 포함 이름을 보존합니다. 해시 manifest에도 두 이름을 기록합니다.
+이 플랫폼 동작은 [GitHub Release assets 문서](https://docs.github.com/en/rest/releases/assets#upload-a-release-asset)에 설명되어 있습니다.
 파일명에 공백이 있으므로 PowerShell에서는 `& '.\BS Pro Controller.exe'`로 실행합니다.
 태그 작업에만 contents 쓰기 권한을 부여하며 개인 토큰을 저장하지 않습니다.
 
