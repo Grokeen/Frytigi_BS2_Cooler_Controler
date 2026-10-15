@@ -554,3 +554,17 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - **0.4.5** 보완: ZIP 내부에도 정확한 **BS Pro Controller.exe**를 추가, ZIP 내 설치용 사본과 동일 해시 검사 추가, 외부 manifest에 공백/점 두 이름 기록, Release label 자동 지정. README/안내/AGENTS에 원래 이름을 보존하는 ZIP 실행 방법을 명시함.
 - 보완 후 Release 전체 빌드 **경고 0/오류 0**, 기존 **40개 테스트**와 최상위·ZIP 내 두 실행기·게시 EXE 해시 검사 통과. 변경은 패키징/문서/버전이며 온도/USB 제어 코드는 그대로임.
 - 프로필에는 기존 Pull Shark/Quickdraw가 표시됨. 신규 획득/등급 상승을 확인한 것으로 기록하지 않음. 새 0.4.5 CI/배포/최종 설치는 수행 후 기록함.
+
+## 2026-10-16 04:12:15 KST — 최상위 실행기 0.4.5 최종 배포/다운로드/설치 확인
+
+- [PR #11](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/11) head **`832a852c10f11d149011c6ccfdef21cc62ad1594`**, [PR 빌드 38791269747](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38791269747) success 후 예상 head를 지정해 병합함. 최종 배포/설치 소스 **`df3357e03b4815965e0e030e14182d665b34f4a9`**, 태그 **v0.4.5**.
+- [main 빌드 38791563071](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38791563071), [Windows release 38791570437](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38791570437) success. 원격 Release 로그에서 **빌드 경고 0/오류 0, 테스트 40개, 최상위 실행기/ZIP 구성/해시 검사 통과** 확인.
+- [GitHub v0.4.5](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.5) 실제 게시 **2026-10-16 04:10:26 KST**. 공개 ZIP/단독 EXE/manifest를 직접 다시 내려받아 검증함. 다운로드 파일은 실행하지 않음.
+- GitHub ZIP **684,851바이트**, SHA-256 **`C79108979481198F2F798118B606FCCBC04960DAE0C3767FEED7183C0467074B`**. ZIP 안의 **BS Pro Controller.exe** 이름을 확인하고 해당 항목/설치용 EXE/단독 자산의 해시가 모두 같음을 검증함.
+- GitHub EXE **474,093바이트**, SHA-256 **`114ED63504E41AF82B7B32A8369857FD96DA688B73543539FA20FE8E18DB55F3`**, 제품 버전 **0.4.5+df3357e03b4815965e0e030e14182d665b34f4a9**. asset name **BS.Pro.Controller.exe**, label **BS Pro Controller.exe**, manifest에 공백/점 두 이름이 같은 해시로 포함된 것을 확인함.
+- 로컬 최종 병합 소스로 `Publish-App.ps1` 재게시/검사 후 프로젝트 최상위 **D:\kimyongrok\Frytigi_BS2_Cooler_Controler\BS Pro Controller.exe** 생성. **474,088바이트**, SHA-256 **`A648CFD3E0D0B7F85D80BCE829F2A7546A8429205678FBE2400637793D420CFA`**. 게시 사본 및 보호된 Program Files 설치 사본과 해시/제품 버전 일치 확인.
+- 로컬 ZIP **672,631바이트**, SHA-256 **`ECEDD74F57A2A45D7B664A2F25B82A42F65E661D468506AFFC07BABCB80E868B`**. 로컬 SDK 게시 결과와 GitHub runner 결과의 해시/크기를 출처별로 구분함. 이 PC는 로컬 게시 결과를 사용함.
+- `Install-Desktop.ps1 -StartupCooling Preserve` 관리자 설치 exit **0**. 최상위 공백 포함 EXE의 최종 실행 exit **0**, 설치된 PID **12712** 유지하며 창 열림 확인. Connected/Automatic/Elevated/Initialized/Tray **true**, CPU **66°C**/GPU **45°C**, 설정 **AutoStartCooling true/CPU·GPU 기준/성능** 유지. 창을 열어 둠.
+- 실행기는 개발/배포 게시 때 최상위에 갱신됨. `dotnet build`만으로 배포 EXE를 생성한다고 안내하지 않으며 `tools/Publish-App.ps1`이 명시된 생성 방법임. 소스 복제본의 바이너리는 Git 추적 대상이 아니고 Release/Actions 산출물로 제공함.
+- 최종 프로필 이미지 **pull-shark-default / quickdraw-default** 확인. 기존 두 종류이며 새 배지/등급 상승으로 보고하지 않음. 실제 파일 배치 변경 PR #10과 GitHub 제약 보완 PR #11만 수행함.
+- 최종 결과 문서는 후속 문서 PR로 빌드 검증/병합하며 문서 main 커밋과 위 배포 소스를 구분함. 원시 검증 JSON/다운로드/개인 설정은 `.analysis/`에, 빌드 산출물은 제외 규칙의 로컬 위치에만 보관함.
