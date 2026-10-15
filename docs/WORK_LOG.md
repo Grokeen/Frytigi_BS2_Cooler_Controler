@@ -243,3 +243,15 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 일반 권한 `Bs2Cooler.UiSmoke --expect-elevation --automatic`: CPU 권한 버튼/CPU 누락 시 시작 차단 확인 후 GPU 기준으로 변경 → 실측 51°C/목표 2100 RPM → 시작/중지/기존 목표 복원 통과.
 - 앞서 통과한 관리자 CPU/GPU 실기 및 WPF 시험과 함께, CPU 드라이버 설치 후에도 일반 권한 GPU 제어가 유지됨을 확인함.
 - Git 변경 파일/공백 검토 통과. 최종 배포본과 원격 업로드 결과는 다음 기록에 추가함.
+
+## 2026-10-16 01:53:04 KST — 0.2.1 게시 및 Git 업로드 완료
+
+- 기능 커밋: `88cba9e0d8d29db0b9399b4ba39839f6b7596cb2` — `Enable verified CPU and GPU cooling with explicit sensor elevation`.
+- `git push origin main` 성공. `git ls-remote`로 원격 `refs/heads/main`이 같은 커밋임을 확인함. 소스/진단/UI 도구/문서/보고서 15개 파일 반영.
+- staged diff 공백 검사 통과, 비밀키/인증 토큰 패턴 검색 결과 없음. 설치 파일, 원시 로그, 로컬 EXE/ZIP은 Git에 포함하지 않음.
+- `tools/Publish-App.ps1` 성공. EXE 버전 `0.2.1+88cba9e0d8d29db0b9399b4ba39839f6b7596cb2`, 크기 276,968바이트. ZIP 크기 179,284바이트.
+- **현재 최종 EXE SHA-256**: `53CB02B6C41908AE240050B0D9FD9FF4725EC6B0D61A666A85F65F99539E5853`.
+- ZIP에 EXE/사용 설명서/해시/외부 고지와 IntelMSR 모듈 대응 소스·라이선스 포함 확인. PawnIO 설치 파일은 포함하지 않음.
+- CPU 온도를 사용할 수 있도록 배포 EXE를 Windows 관리자 실행으로 시작했고 `BS2 Cooler` 창과 응답 상태를 확인함. 팬 제어는 사용자가 온도 자동 탭에서 시작하도록 둠.
+- 이후 일반 실행에서 CPU 권한 안내가 표시되면 **CPU 온도 권한으로 다시 실행** 버튼을 사용하면 됨. 현재 PC의 공식 드라이버 설치는 완료됐으므로 매번 다시 설치할 필요는 없음.
+- 이 최종 확인 기록은 후속 문서 커밋으로 동일 원격에 반영함. 검증 완료된 앱 소스와 배포 EXE는 변경하지 않음.
