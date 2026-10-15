@@ -38,8 +38,7 @@ public partial class MainWindow
         {
             _temperatures = await Task.Run(_temperatureMonitor.Read);
             if (_closing) return;
-            CpuTemperature.Text = _temperatures.Cpu is { } cpu ? $"{cpu.Celsius:F0}°C" : "—";
-            GpuTemperature.Text = _temperatures.Gpu is { } gpu ? $"{gpu.Celsius:F0}°C" : "—";
+            UpdateTemperatureDisplay();
             SensorDescription.Text = _temperatures.CpuElevationRequired ? "CPU 온도에 관리자 권한 필요" : (_temperatures.Cpu != null, _temperatures.Gpu != null) switch
             {
                 (true, true) => "CPU/GPU 온도 수집 중",
@@ -53,10 +52,25 @@ public partial class MainWindow
         catch (Exception ex)
         {
             _temperatures = new(null, null, ex.Message, ex.Message);
-            CpuTemperature.Text = "—"; GpuTemperature.Text = "—";
+            UpdateTemperatureDisplay();
             SensorDescription.Text = "센서 조회 실패 · 자동 제어 시 최대 풍량";
         }
         finally { _readingTemperatures = false; UpdateControls(); }
+    }
+
+    public (string Cpu, string Gpu) TemperatureLabels()
+    {
+        var now = DateTimeOffset.Now;
+        string Display(TemperatureReading? reading) => reading?.IsUsable(now) == true ? $"{reading.Celsius:F0}°C" : "—";
+        return (Display(_temperatures.Cpu), Display(_temperatures.Gpu));
+    }
+
+    private void UpdateTemperatureDisplay()
+    {
+        var temperatures = TemperatureLabels();
+        CpuTemperature.Text = temperatures.Cpu;
+        GpuTemperature.Text = temperatures.Gpu;
+        TemperatureSummary.Text = $"CPU {temperatures.Cpu} · GPU {temperatures.Gpu} · 2초 갱신";
     }
 
     private bool SensorsReady()

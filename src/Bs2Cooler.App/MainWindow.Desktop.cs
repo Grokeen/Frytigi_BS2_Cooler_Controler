@@ -100,8 +100,7 @@ public partial class MainWindow
     }
     public string TraySummary()
     {
-        string cpu = _temperatures.Cpu is { } c ? $"{c.Celsius:F0}" : "—";
-        string gpu = _temperatures.Gpu is { } g ? $"{g.Celsius:F0}" : "—";
-        return $"BS2 Cooler · CPU {cpu}° / GPU {gpu}°\n{(_automatic ? "자동 제어" : _startupAutomaticPending ? "자동 제어 대기" : "수동 모드")} · {_status?.Speed.TargetRpm ?? 0} RPM";
+        var temperatures = TemperatureLabels();
+        return $"BS2 Cooler · CPU {temperatures.Cpu} / GPU {temperatures.Gpu}\n{(_automatic ? "자동 제어" : _startupAutomaticPending ? "자동 제어 대기" : "수동 모드")} · {_status?.Speed.TargetRpm ?? 0} RPM";
     }
 }
