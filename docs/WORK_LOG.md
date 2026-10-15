@@ -512,3 +512,19 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - WPF 진단에 실제 명령을 실행하지 않는 키보드 누름/포커스 이탈 효과 검사를 추가함. 최종 Release 빌드 경고/오류 0개, 실물 전체 UI 시험 exit 0. CPU **56°C**/GPU **45°C**, RGB 적용·복원과 자동 제어·복원도 다시 통과함.
 - [PR #8](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/8)에 최초 커밋 `02d2f15a9d1701a470519bfc94b2006a182e8b97` 푸시 완료. [첫 Windows 빌드 38788334573](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38788334573) success 확인. 이 보완을 같은 PR에 추가하고 최종 head의 CI 성공 후 병합함.
 - 프로필 확인 결과 기존 **Pull Shark/Quickdraw** 두 종류만 표시됨. 새 획득/등급 상승은 확인되지 않음.
+
+## 2026-10-16 03:52:52 KST — 다크 UI 0.4.3 GitHub 배포 및 최종 설치 확인
+
+- [PR #8](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/8) 최초 커밋 `02d2f15a9d1701a470519bfc94b2006a182e8b97`, 포커스 복귀 보완 head **`8fd2f53e6477bf4145439837d342658981772ad8`**. [최종 PR 빌드 38788560272](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38788560272) success 후 예상 head SHA를 지정해 병합함.
+- 병합/배포 소스 **`72af254aab46fc843f8369ab1dce52a7cc3c934f`**, 태그 **v0.4.3**. [main 빌드 38788831361](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38788831361)와 [Windows release 38788838270](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38788838270) success 확인. 기존 태그/Release는 보존함.
+- 원격 PR/Release 작업 로그에서 **빌드 경고 0/오류 0, 프로토콜·온도·RGB 테스트 40개, ZIP 필수 파일/안전 경로/EXE 해시 검사 통과**를 확인함.
+- [GitHub Release v0.4.3](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.3) 실제 게시 시각 **2026-10-16 03:51:32 KST**. 공개 ZIP 및 외부 manifest를 다시 내려받아 ZIP/내부 EXE 해시를 검증함.
+- GitHub ZIP **408,506바이트**, SHA-256 **`A51FDB3A15375F1AA9B2C1B3A1F2634B07F9BFE7437AA62BCB9F0E84F6E8F72C`**.
+- GitHub 내부 EXE **474,093바이트**, SHA-256 **`1D8AD5170067C5303ECCFD81B75C149DB0940F8118B0AB12DBE406A37A2903CB`**, 제품 버전 **`0.4.3+72af254aab46fc843f8369ab1dce52a7cc3c934f`**. 외부 Release manifest와 ZIP 내부 EXE manifest에 모두 일치함. 다운로드한 EXE를 실행하거나 자동 설치하지 않음.
+- 같은 병합 소스를 로컬 `Publish-App.ps1`로 다시 게시/검사하고 `Install-Desktop.ps1 -StartupCooling Preserve`로 관리자 설치 exit **0** 확인. 로컬 ZIP **402,596바이트**, SHA-256 **`4DA1E4E48CFFDD6559BF88A42AF358D855667E9258FA1338154B76CC11A94D55`**.
+- 설치 경로 `C:\Program Files\BS2 Cooler\Bs2Cooler.exe`, **474,088바이트**, SHA-256 **`980CA216D01A17E45B98A5868B9C03FBB671AD644074209188C1CEB4908064B4`**. 로컬 게시 EXE/설치 사본 해시와 제품 버전/소스 커밋 일치 확인. 로컬/원격 SDK 환경에 따른 해시 차이를 구분함.
+- 설치 직후 **Visible false/Connected true/Automatic true/Elevated true/Initialized true/Tray true** 및 CPU **57°C**/GPU **46°C** 확인. 새 앱의 백그라운드 자동 시작이 정상임을 확인한 뒤 사용자가 새 UI를 볼 수 있게 창을 열어 둠.
+- 창을 연 뒤 CPU **59°C**/GPU **46°C**, 실제/목표 **2100 RPM**, 일반 전원 상한 **2700 RPM**, 저장 속도 **1400,2400,2700,2700**, RGB/단계등 **Off** 확인. 후속 온도는 CPU **55°C**/GPU **45°C**, Automatic true로 계속 동작함.
+- 사용자 설정 **AutoStartCooling true/CPU·GPU 중 높은 값/성능** 및 로그인 예약 작업 유지. UI 변경으로 70°C 목표, 60°C부터 최대 풍량/57°C 미만 해제, 센서 보호/복원 정책을 변경하지 않음.
+- 프로필에는 기존 **Pull Shark/Quickdraw** 두 종류가 계속 표시됨. 실제 기능 PR을 정상 병합했으며 새 배지 획득/등급 상승으로 기록하지 않음.
+- 이 최종 결과는 후속 문서 PR에서 빌드 검증 후 main에 반영함. 최종 main의 문서 커밋과 배포/설치 소스 커밋은 구분함. 원시 로그·개인 설정·렌더링·다운로드는 `.analysis/`/`artifacts/`에만 보관하며 Git에 올리지 않음.
