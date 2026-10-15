@@ -505,3 +505,10 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 시험 중 기존 자동 앱을 정상 종료하고 finally에서 같은 예약 작업으로 다시 시작함. 사용자 설정 **AutoStartCooling On/CPU·GPU 기준**과 70°C 목표 정책을 유지함. USB/온도 제어 Core 코드는 변경하지 않음.
 - 검증 범위: 현재 Windows 11/현재 DPI, 장치 일반 전원. 고대비/다중 모니터 DPI/Windows 애니메이션 시스템 설정 자체의 On·Off 전환/실제 재부팅은 수행하지 않음. 애니메이션 생략은 요소 설정으로 검사하고 시스템 설정 준수는 같은 공통 조건을 코드로 확인함.
 - GitHub CI/PR/Release와 최종 설치 해시는 실제 완료 후 별도 기록함.
+
+## 2026-10-16 03:47:32 KST — 키보드 누름 효과 복귀 보완 및 PR 업로드
+
+- 자체 검토에서 Space/Enter를 누른 채 다른 컨트롤로 포커스가 옮겨지면 KeyUp을 받지 못해 축소 효과가 남을 수 있음을 확인함. `UiMotion.cs`에 LostKeyboardFocus 시 원래 크기 복귀를 추가함.
+- WPF 진단에 실제 명령을 실행하지 않는 키보드 누름/포커스 이탈 효과 검사를 추가함. 최종 Release 빌드 경고/오류 0개, 실물 전체 UI 시험 exit 0. CPU **56°C**/GPU **45°C**, RGB 적용·복원과 자동 제어·복원도 다시 통과함.
+- [PR #8](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/8)에 최초 커밋 `02d2f15a9d1701a470519bfc94b2006a182e8b97` 푸시 완료. [첫 Windows 빌드 38788334573](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38788334573) success 확인. 이 보완을 같은 PR에 추가하고 최종 head의 CI 성공 후 병합함.
+- 프로필 확인 결과 기존 **Pull Shark/Quickdraw** 두 종류만 표시됨. 새 획득/등급 상승은 확인되지 않음.

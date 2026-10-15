@@ -36,6 +36,7 @@ public static class UiMotion
             control.MouseEnter += OnPointerEnter; control.MouseLeave += OnPointerLeave;
             control.PreviewMouseLeftButtonDown += OnPress; control.PreviewMouseLeftButtonUp += OnRelease;
             control.LostMouseCapture += OnLostCapture;
+            control.LostKeyboardFocus += OnLostKeyboardFocus;
             control.IsEnabledChanged += OnEnabledChanged;
             control.PreviewKeyDown += OnKeyDown; control.PreviewKeyUp += OnKeyUp;
         }
@@ -44,6 +45,7 @@ public static class UiMotion
             control.MouseEnter -= OnPointerEnter; control.MouseLeave -= OnPointerLeave;
             control.PreviewMouseLeftButtonDown -= OnPress; control.PreviewMouseLeftButtonUp -= OnRelease;
             control.LostMouseCapture -= OnLostCapture;
+            control.LostKeyboardFocus -= OnLostKeyboardFocus;
             control.IsEnabledChanged -= OnEnabledChanged;
             control.PreviewKeyDown -= OnKeyDown; control.PreviewKeyUp -= OnKeyUp;
         }
@@ -53,6 +55,7 @@ public static class UiMotion
     private static void OnPress(object sender, MouseButtonEventArgs e) { Hover((Control)sender, 0.14); Press((Control)sender, true); }
     private static void OnRelease(object sender, MouseButtonEventArgs e) { Hover((Control)sender, 0.07); Press((Control)sender, false); }
     private static void OnLostCapture(object sender, MouseEventArgs e) => Press((Control)sender, false);
+    private static void OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) => Press((Control)sender, false);
     private static void OnEnabledChanged(object sender, DependencyPropertyChangedEventArgs e) { if (!(bool)e.NewValue) { Hover((Control)sender, 0); Press((Control)sender, false); } }
     private static void OnKeyDown(object sender, KeyEventArgs e) { if (e.Key is Key.Space or Key.Enter) Press((Control)sender, true); }
     private static void OnKeyUp(object sender, KeyEventArgs e) { if (e.Key is Key.Space or Key.Enter) Press((Control)sender, false); }

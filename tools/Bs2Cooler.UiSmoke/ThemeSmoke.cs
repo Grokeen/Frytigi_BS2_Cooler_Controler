@@ -25,6 +25,7 @@ internal static class ThemeSmoke
         tabs.SelectedIndex = selected;
         await Task.Delay(250);
         await MotionAsync((TextBlock)window.FindName("StatusText"));
+        await ButtonAsync((Button)window.FindName("RefreshButton"));
         Console.WriteLine("PASS: main dark combo surfaces/items, keyboard selection, tab transition and status motion.");
     }
 
@@ -106,6 +107,27 @@ internal static class ThemeSmoke
                 throw new Exception("Disabled motion still animates status.");
         }
         finally { text.Text = original; UiMotion.SetEnabled(text, enabled); }
+    }
+
+    private static async Task ButtonAsync(Button button)
+    {
+        bool enabled = button.IsEnabled;
+        try
+        {
+            var source = PresentationSource.FromVisual(button)!;
+            button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+            await Task.Delay(150);
+            if (SystemParameters.ClientAreaAnimation && (button.RenderTransform is not ScaleTransform scale || Math.Abs(scale.ScaleX - .975) > .001))
+                throw new Exception("Keyboard press did not animate the button.");
+            button.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, Environment.TickCount, button, null) { RoutedEvent = Keyboard.LostKeyboardFocusEvent });
+            await Task.Delay(150);
+            if (button.RenderTransform is ScaleTransform restored && Math.Abs(restored.ScaleX - 1) > .001)
+                throw new Exception("Button remained pressed after losing keyboard focus.");
+            button.IsEnabled = false;
+            await Task.Delay(150);
+            Console.WriteLine("PASS: button press animation and keyboard-focus loss recovery without executing its command.");
+        }
+        finally { button.IsEnabled = enabled; }
     }
 
     private static void CheckDark(Brush brush)
