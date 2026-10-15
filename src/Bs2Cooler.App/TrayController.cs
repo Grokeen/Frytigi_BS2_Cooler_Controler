@@ -23,6 +23,7 @@ internal sealed class TrayController : IDisposable
         var gpuTemperature = new Forms.ToolStripMenuItem("GPU 온도: —") { Enabled = false };
         _menu.Items.Add(cpuTemperature);
         _menu.Items.Add(gpuTemperature);
+        _menu.Items.Add(new Forms.ToolStripMenuItem("목표 70°C · 60°C부터 최대 풍량") { Enabled = false });
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("창 열기", null, (_, _) => window.ShowControlWindow());
         var automatic = new Forms.ToolStripMenuItem("온도 자동 제어 시작");

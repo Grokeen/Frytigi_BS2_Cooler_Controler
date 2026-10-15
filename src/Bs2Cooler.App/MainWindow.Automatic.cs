@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using System.Windows.Media;
 using Bs2Cooler.Core;
 using Bs2Cooler.Windows;
 
@@ -15,6 +16,7 @@ public partial class MainWindow
     private readonly ThermalControl _thermalControl = new();
     private readonly SemaphoreSlim _automaticGate = new(1, 1);
     private TemperatureSnapshot _temperatures = new(null, null, "확인 중", "확인 중");
+    private string _sensorSummary = "온도 센서 확인 중";
     private bool _readingTemperatures;
     private bool _automatic;
     private CoolerStatus? _beforeAutomatic;
@@ -42,8 +44,7 @@ public partial class MainWindow
         {
             _temperatures = await Task.Run(_temperatureMonitor.Read);
             if (_closing) return;
-            UpdateTemperatureDisplay();
-            SensorDescription.Text = _temperatures.CpuElevationRequired ? "CPU 온도에 관리자 권한 필요" : (_temperatures.Cpu != null, _temperatures.Gpu != null) switch
+            _sensorSummary = _temperatures.CpuElevationRequired ? "CPU 온도에 관리자 권한 필요" : (_temperatures.Cpu != null, _temperatures.Gpu != null) switch
             {
                 (true, true) => "CPU/GPU 온도 수집 중",
                 (false, true) => "CPU 센서 없음 · GPU 기준 사용 가능",
@@ -52,12 +53,13 @@ public partial class MainWindow
             };
             CpuTemperature.ToolTip = _temperatures.CpuStatus;
             GpuTemperature.ToolTip = _temperatures.GpuStatus;
+            UpdateTemperatureDisplay();
         }
         catch (Exception ex)
         {
             _temperatures = new(null, null, ex.Message, ex.Message);
+            _sensorSummary = "센서 조회 실패 · 자동 제어 시 최대 풍량";
             UpdateTemperatureDisplay();
-            SensorDescription.Text = "센서 조회 실패 · 자동 제어 시 최대 풍량";
         }
         finally { _readingTemperatures = false; UpdateControls(); }
     }
@@ -74,7 +76,20 @@ public partial class MainWindow
         var temperatures = TemperatureLabels();
         CpuTemperature.Text = temperatures.Cpu;
         GpuTemperature.Text = temperatures.Gpu;
-        TemperatureSummary.Text = $"CPU {temperatures.Cpu} · GPU {temperatures.Gpu} · 2초 갱신";
+        TemperatureSummary.Text = $"CPU {temperatures.Cpu} · GPU {temperatures.Gpu} · 목표 {ThermalControl.TargetCelsius}°C";
+        SensorDescription.Text = _sensorSummary;
+        SensorDescription.Foreground = (Brush)FindResource("Muted");
+        if (SensorsReady())
+        {
+            double current = SelectedScope == TemperatureScope.CpuAndGpu
+                ? Math.Max(_temperatures.Cpu!.Celsius, _temperatures.Gpu!.Celsius) : _temperatures.Gpu!.Celsius;
+            if (current >= ThermalControl.TargetCelsius)
+            {
+                string condition = current > ThermalControl.TargetCelsius ? "목표 초과" : "목표 도달";
+                SensorDescription.Text = $"70°C {condition} · {(_automatic ? "최대 풍량 제어 중" : "자동 제어 꺼짐")}";
+                SensorDescription.Foreground = Brushes.OrangeRed;
+            }
+        }
     }
 
     private bool SensorsReady()

@@ -28,8 +28,12 @@ public static class IntelThermalDecoder
 
 public sealed class ThermalControl
 {
+    public const int TargetCelsius = 70;
+    public const int FullSpeedCelsius = 60;
+    public const int FullSpeedReleaseCelsius = 57;
     private int _previousRpm;
     private bool _critical;
+    private bool _targetCooling;
     private static readonly int[] Thresholds = [30, 40, 50, 60, 70, 80, 90, 100];
 
     public CoolingDecision Evaluate(TemperatureSnapshot sample, TemperatureScope scope, CoolingPreset preset, int maximumRpm, DateTimeOffset now)
@@ -46,10 +50,19 @@ public sealed class ThermalControl
             ? Math.Max(sample.Cpu!.Celsius, sample.Gpu!.Celsius) : sample.Gpu!.Celsius;
         if (temperature >= 90) _critical = true;
         else if (temperature < 87) _critical = false;
+        if (temperature >= FullSpeedCelsius) _targetCooling = true;
+        else if (temperature < FullSpeedReleaseCelsius) _targetCooling = false;
         if (_critical)
         {
             _previousRpm = maximumRpm;
-            return new(maximumRpm, temperature, false, "고온 보호 · 최대 풍량");
+            return new(maximumRpm, temperature, false, "90°C 고온 보호 · 최대 풍량 · 70°C 목표 초과");
+        }
+        if (_targetCooling)
+        {
+            _previousRpm = maximumRpm;
+            string reason = temperature > TargetCelsius ? "70°C 목표 초과 · 최대 풍량" : temperature == TargetCelsius
+                ? "70°C 목표 도달 · 최대 풍량" : "70°C 목표 · 선제 최대 풍량";
+            return new(maximumRpm, temperature, false, reason);
         }
         int desired = Lookup(temperature, preset, maximumRpm);
         // A cooling reading must cross a threshold by 2 C before fan speed decreases.
@@ -59,7 +72,7 @@ public sealed class ThermalControl
         return new(_previousRpm, temperature, false, preset == CoolingPreset.Quiet ? "저소음 온도 곡선" : "성능 온도 곡선");
     }
 
-    public void Reset() { _previousRpm = 0; _critical = false; }
+    public void Reset() { _previousRpm = 0; _critical = false; _targetCooling = false; }
 
     private static int Lookup(double temperature, CoolingPreset preset, int maximum)
     {
