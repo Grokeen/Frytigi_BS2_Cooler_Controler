@@ -473,3 +473,19 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - `.analysis/target70-ui-preview.png`를 열어 목표 표시/두 센서/자동 탭 설명/버튼 배치를 직접 확인함. 원시 시험 로그는 `.analysis/target70-ui-verification.txt`에 보관함.
 - **검증 한계**: 고부하에서 실제 70°C 이하를 지속 유지하는 시험은 수행하지 않음. 외장 쿨러 냉각 능력 이상의 열을 제어로 제거할 수 없으며 CPU/GPU 전력·클럭/Windows 전원 정책을 변경하지 않음.
 - 실기 시험 동안 기존 앱을 정상 종료하고 시험 후 로그인 예약 작업을 다시 실행함. 사용자 선택인 CPU/GPU 로그인 자동 시작 On은 유지함. 최종 0.4.2 설치와 GitHub 게시 결과는 수행 후 추가함.
+
+## 2026-10-16 03:22:34 KST — 70°C 목표 0.4.2 GitHub 게시/설치 최종 확인
+
+- [PR #6](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/6), 기능 소스 **`494ea1a0592a9976afe352a007038e94dc09f74b`**. [PR 빌드 38784337703](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38784337703) success 후 검토한 head SHA를 지정해 병합함.
+- 병합/배포 소스 **`40e5c11faca9ab7fb488b43ec7065cf0191feece`**, 새 태그 **v0.4.2**. 기존 태그/Release 자산은 재작성하지 않음.
+- [Windows release 38784561290](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38784561290) success. 작업 로그에서 **빌드 경고 0/오류 0, 프로토콜·온도·RGB 테스트 40개, 패키지 검사 통과**를 확인함.
+- [v0.4.2 Release](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.2) 실제 게시 **2026-10-16 03:20:40 KST**. 공개 파일을 직접 다시 내려받아 검증함.
+- GitHub ZIP **399,378바이트**, SHA-256 **`70A1EFB26DC3E5199A5D76257D91F3F5F57F155275958BE433799168DDFCCFD7`**.
+- GitHub 내부 EXE **457,709바이트**, SHA-256 **`78A29927693EDE66183637B8340511C85B5924CB32D7B151697AEE86825EAB25`**, 제품 버전 **`0.4.2+40e5c11faca9ab7fb488b43ec7065cf0191feece`**. 외부 Release manifest와 ZIP 내부 EXE manifest에 모두 일치함.
+- 같은 최종 소스를 로컬 게시/패키지 검사 후 `Install-Desktop.ps1 -StartupCooling Preserve`로 설치해 exit 0 확인. 로컬 ZIP **394,568바이트**, 설치 EXE **457,704바이트**, SHA-256 **`61BE7F0753124E4C3E99C9A0E8DE591CCDDFF2591C056959737BFC6F38500C21`**. 로컬 게시/설치 사본의 해시와 최종 소스 버전 일치 확인.
+- 로컬/원격 빌드 환경에 따른 해시 차이를 구분함. 현재 PC는 로컬 게시 결과를 설치한 상태이며 GitHub에서 받은 EXE로 자동 교체하지 않음.
+- 현재 설치본의 **창 열림/연결됨/관리자/트레이/Automatic true** 확인. CPU **59°C**, GPU **45°C**, 목표 **2100 RPM**/실제 **2000 RPM** 관측. 이 시점에는 60°C 미만이므로 최대 풍량 진입 전의 성능 곡선을 사용함.
+- 설정 **AutoStartCooling true / CPU·GPU 중 높은 값 / 성능** 유지. 저장 속도 **1400,2400,2700,2700**, RGB/단계등 Off 유지. 업데이트 중 기존 자동 앱은 정상 종료/복원 후 재시작함.
+- 60°C 이상 최대 풍량/57°C 미만 해제/70°C 도달·초과 조건은 테스트 데이터로 검증했고, 고부하 실물에서 실제 70°C 이하를 지속 유지했다고 주장하지 않음. 냉각 성능의 한계는 화면/문서에 표시함.
+- GitHub 프로필은 기존 Pull Shark/Quickdraw 기본 배지를 계속 표시함. 새 업적 획득으로 기록하지 않음. 실제 기능 PR과 결과 문서 PR로 작업을 반영함.
+- 최종 결과 문서는 후속 PR로 빌드 검증 후 main에 반영함. 다운로드 자료/원시 로그/화면/개인 설정은 Git에서 제외하고 앱 소스·테스트·문서만 올림.
