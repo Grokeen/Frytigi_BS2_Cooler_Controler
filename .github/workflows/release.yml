@@ -45,6 +45,7 @@ jobs:
         with:
           name: Bs2Cooler-release-${{ github.ref_name }}
           path: |
+            BS Pro Controller.exe
             artifacts/Bs2Cooler-win-x64.zip
             artifacts/RELEASE-SHA256SUMS.txt
           if-no-files-found: error
@@ -55,5 +56,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create $env:RELEASE_TAG artifacts/Bs2Cooler-win-x64.zip artifacts/RELEASE-SHA256SUMS.txt --verify-tag --title "BS2 Cooler $env:RELEASE_TAG" --notes-file docs/RELEASE-NOTES.ko.md
+          gh release create $env:RELEASE_TAG "BS Pro Controller.exe" artifacts/Bs2Cooler-win-x64.zip artifacts/RELEASE-SHA256SUMS.txt --verify-tag --title "BS2 Cooler $env:RELEASE_TAG" --notes-file docs/RELEASE-NOTES.ko.md
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed; existing assets are never overwritten automatically.' }
