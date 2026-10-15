@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Bs2Cooler</AssemblyName>
+    <Product>BS2 Cooler</Product>
+    <Description>Standalone local USB control for BS2 Pro</Description>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Bs2Cooler.Windows/Bs2Cooler.Windows.csproj" /></ItemGroup>
+</Project>

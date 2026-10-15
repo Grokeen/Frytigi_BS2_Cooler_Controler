@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/Bs2Cooler.Core/Bs2Cooler.Core.csproj" /></ItemGroup>
+</Project>

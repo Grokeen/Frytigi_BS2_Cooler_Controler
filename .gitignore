@@ -1,0 +1,5 @@
+.analysis/
+**/bin/
+**/obj/
+.vs/
+artifacts/
