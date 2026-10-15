@@ -25,7 +25,11 @@ public partial class MainWindow
 
     private void InitializeTemperatureMonitoring()
     {
-        _temperatureTimer.Tick += async (_, _) => await RefreshTemperaturesAsync();
+        _temperatureTimer.Tick += async (_, _) =>
+        {
+            UpdateTemperatureDisplay();
+            await RefreshTemperaturesAsync();
+        };
         _temperatureTimer.Start();
         _ = RefreshTemperaturesAsync();
     }
