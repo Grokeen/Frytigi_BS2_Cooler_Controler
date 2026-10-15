@@ -1,15 +1,15 @@
 <Window x:Class="Bs2Cooler.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="BS2 Cooler"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Bs2Cooler.App" Title="BS2 Cooler"
         Width="850" Height="800" MinWidth="760" MinHeight="780" Background="#0E1622" Icon="Assets/Bs2Cooler.ico"
         Foreground="#EDF4FF" FontFamily="Malgun Gothic, Segoe UI" FontSize="13"
         WindowStartupLocation="CenterScreen" Loaded="OnLoaded" Closing="OnClosing">
-  <Grid Margin="28,24">
+  <Grid Margin="28,24" local:UiMotion.Reveal="True">
     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
     <Grid>
       <StackPanel><TextBlock Text="BS2 Cooler" FontSize="28" FontWeight="SemiBold" />
         <TextBlock x:Name="TemperatureSummary" Text="CPU — · GPU — · 목표 70°C" Foreground="#8BE5CA" Margin="0,5,0,0" AutomationProperties.Name="CPU 및 GPU 현재 온도와 목표" /></StackPanel>
       <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#1C3040" CornerRadius="14" Padding="13,7">
-        <TextBlock x:Name="ConnectionBadge" Text="연결 확인 중" Foreground="#75DBBF" />
+        <TextBlock x:Name="ConnectionBadge" Text="연결 확인 중" Foreground="#75DBBF" local:UiMotion.AnimateText="True" />
       </Border>
     </Grid>
     <Border Grid.Row="1" Background="{StaticResource Panel}" CornerRadius="12" Margin="0,22,0,20" Padding="22,18">
@@ -54,13 +54,13 @@
           <TabItem Header="온도 자동"><StackPanel Margin="0,14,0,0">
             <TextBlock Text="제어 기준" Foreground="{StaticResource Muted}" Margin="0,0,0,6" />
             <ComboBox x:Name="TemperatureSource" SelectedIndex="0" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
-              <ComboBoxItem><TextBlock Text="CPU / GPU 중 더 높은 온도" Foreground="#172332" /></ComboBoxItem>
-              <ComboBoxItem><TextBlock Text="GPU 온도만" Foreground="#172332" /></ComboBoxItem>
+              <ComboBoxItem Content="CPU / GPU 중 더 높은 온도"/>
+              <ComboBoxItem Content="GPU 온도만"/>
             </ComboBox>
             <TextBlock Text="냉각 곡선" Foreground="{StaticResource Muted}" Margin="0,16,0,6" />
             <ComboBox x:Name="CurvePreset" SelectedIndex="0" SelectionChanged="OnAutomaticSettingsChanged" Padding="7" FontSize="13">
-              <ComboBoxItem><TextBlock Text="성능 · 온도 상승에 빠르게 반응" Foreground="#172332" /></ComboBoxItem>
-              <ComboBoxItem><TextBlock Text="저소음 · 낮은 온도에서 조용하게" Foreground="#172332" /></ComboBoxItem>
+              <ComboBoxItem Content="성능 · 온도 상승에 빠르게 반응"/>
+              <ComboBoxItem Content="저소음 · 낮은 온도에서 조용하게"/>
             </ComboBox>
             <TextBlock x:Name="AutoState" Text="온도 센서를 확인하고 있습니다." TextWrapping="Wrap" Foreground="#8BE5CA" Margin="0,20,0,0" MinHeight="42" />
             <Button x:Name="AutoButton" Content="자동 제어 시작" Click="OnAutomaticClick" Background="#55CBB0" Foreground="#082D27" FontWeight="Bold" Margin="0,12,0,0" />
@@ -94,7 +94,7 @@
     <Grid Grid.Row="3" Margin="0,18,0,0">
       <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
       <StackPanel VerticalAlignment="Center">
-        <TextBlock x:Name="StatusText" Text="BS2 Pro를 찾고 있습니다…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+        <TextBlock x:Name="StatusText" Text="BS2 Pro를 찾고 있습니다…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" local:UiMotion.AnimateText="True" />
         <TextBlock x:Name="LastUpdatedText" Foreground="#71849F" FontSize="10" Margin="0,4,0,0" />
       </StackPanel>
       <Button Grid.Column="1" x:Name="RefreshButton" Content="다시 연결" Click="OnRefreshClick" Margin="15,0,0,0" Padding="13,8" />

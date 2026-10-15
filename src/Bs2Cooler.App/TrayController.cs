@@ -14,6 +14,9 @@ internal sealed class TrayController : IDisposable
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
     public TrayController(MainWindow window)
     {
+        _menu.Renderer = new DarkTrayRenderer();
+        _menu.BackColor = Drawing.Color.FromArgb(24, 34, 49);
+        _menu.ForeColor = Drawing.Color.FromArgb(237, 244, 255);
         using var resource = Application.GetResourceStream(new Uri("/Bs2Cooler;component/Assets/Bs2Cooler.ico", UriKind.Relative)).Stream;
         using var source = new Drawing.Icon(resource);
         _image = (Drawing.Icon)source.Clone();

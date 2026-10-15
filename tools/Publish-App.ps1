@@ -14,7 +14,7 @@ $assets = Join-Path $output 'assets'
 Copy-Item -LiteralPath (Join-Path $workspace 'assets\Bs2Cooler.ico'),(Join-Path $workspace 'assets\Bs2Cooler.png'),(Join-Path $workspace 'assets\Bs2Cooler.svg') -Destination $assets -Force
 $documentation = Join-Path $output 'docs'
 [void][IO.Directory]::CreateDirectory($documentation)
-foreach ($name in @('DESKTOP-STARTUP.ko.md','AUTOMATIC-COOLING.ko.md','RGB-LIGHTING.ko.md')) {
+foreach ($name in @('DESKTOP-STARTUP.ko.md','AUTOMATIC-COOLING.ko.md','RGB-LIGHTING.ko.md','DARK-THEME.ko.md')) {
     Copy-Item -LiteralPath (Join-Path $workspace ('docs\' + $name)) -Destination $documentation -Force
 }
 $moduleDestination = Join-Path $output 'third_party\PawnIO.Modules'
