@@ -358,3 +358,18 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - **미검증**: 실제 재부팅/로그아웃 시 로그인 트리거 실행, Windows 종료 중 비동기 복원 완료, 절전 복귀, USB 분리/재연결. 재부팅 대신 현재 세션에서 등록된 같은 작업의 실행을 확인함.
 - 원시 결과 `.analysis/desktop-verification.txt`, `desktop-ui-verification.txt`, `desktop-install.txt`와 UI 화면은 로컬 보관하며 Git에서 제외함. 사용자 SID/로컬 설정/로그를 배포 소스에 포함하지 않음.
 - 원격과 HEAD 차이 0/0, 비밀키/토큰 패턴 검색 결과 없음. 최종 변경 검토/커밋/푸시 및 버전 커밋이 포함된 EXE 재게시/설치 결과는 수행 후 아래에 추가함.
+
+## 2026-10-16 02:40:10 KST — 0.4.0 최종 게시·설치 및 Git 업로드 확인
+
+- 기능 커밋 **`e0ef5140e7778baffe56879def78e3f862087c6d`** — `Add protected logon startup, background tray control and fan icon`.
+- `git push origin main` 성공. `git ls-remote`로 원격 main이 같은 커밋임을 확인함. 소스/아이콘/설치 도구/문서/보고서 **27개 파일** 반영. staged 공백 검사 통과.
+- `tools/Publish-App.ps1` 성공. 최종 EXE 버전 **`0.4.0+e0ef5140e7778baffe56879def78e3f862087c6d`**, 크기 **453,608바이트**. ZIP **385,329바이트**.
+- **최종 EXE SHA-256**: `ECE3D00B21C5A42EFFE8971D634E4D0FB26A0EDD3697761401DE90F623AF8243`.
+- `Install-Desktop.ps1 -StartupCooling Preserve`를 관리자 권한으로 실행해 **exit 0** 확인. 기존 앱을 정상 종료한 뒤 Program Files의 최종 사본으로 교체하고 시작 설정을 보존함.
+- 설치된 `C:\Program Files\BS2 Cooler\Bs2Cooler.exe`의 버전과 해시가 최종 배포 EXE와 일치함.
+- 예약 작업 **Running / Highest / Interactive / PT10S 지연 / PT0S 실행 제한 없음** 확인. 실행 인자 `--background --startup`, 배터리 실행 허용/배터리 전환 시 중지 안 함 확인.
+- 바탕화면/시작 메뉴 `BS2 Cooler.lnk`의 대상이 보호된 설치 EXE이고 아이콘이 같은 EXE의 0번 아이콘임을 확인함.
+- 최종 실행 상태: **숨김, 연결됨, 관리자, 초기화됨, 트레이 활성, 자동 팬 제어 Off**, CPU **58°C** / GPU **48°C**. 실물 현재/목표 **1400 RPM**, 기존 저장 속도/스마트 모드 Off/RGB Off/단계등 Off 유지 확인.
+- ZIP에 EXE/해시/한국어 설명서/외부 고지/IntelMSR 대응 소스·라이선스/설치 스크립트/SVG·PNG·ICO 포함 확인. PawnIO 설치 파일, 제조사 바이너리, 원시 로그, 사용자 설정은 포함하지 않음.
+- 실제 재부팅은 수행하지 않음. 로그인 트리거 구성과 동일 작업의 현재 세션 실행을 검증한 결과임.
+- 위 최종 확인을 후속 문서 커밋으로 원격 main에 반영함. 앱 소스/설치 EXE는 기능 커밋과 동일하게 유지함.
