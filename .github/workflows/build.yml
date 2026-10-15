@@ -1,0 +1,45 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 9.0.x
+      - name: Build Release solution
+        run: dotnet build Bs2Cooler.sln -c Release
+      - name: Run protocol, thermal and RGB tests
+        run: dotnet run --project tests/Bs2Cooler.Tests -c Release --no-build
+      - name: Publish Windows package
+        run: ./tools/Publish-App.ps1
+      - name: Upload Windows package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Bs2Cooler-win-x64
+          path: |
+            artifacts/Bs2Cooler-win-x64.zip
+            artifacts/Bs2Cooler-win-x64/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

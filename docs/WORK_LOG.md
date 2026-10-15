@@ -373,3 +373,15 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - ZIP에 EXE/해시/한국어 설명서/외부 고지/IntelMSR 대응 소스·라이선스/설치 스크립트/SVG·PNG·ICO 포함 확인. PawnIO 설치 파일, 제조사 바이너리, 원시 로그, 사용자 설정은 포함하지 않음.
 - 실제 재부팅은 수행하지 않음. 로그인 트리거 구성과 동일 작업의 현재 세션 실행을 검증한 결과임.
 - 위 최종 확인을 후속 문서 커밋으로 원격 main에 반영함. 앱 소스/설치 EXE는 기능 커밋과 동일하게 유지함.
+
+## 2026-10-16 02:43:01 KST — GitHub 빌드/배포 및 업적 조건 확인 시작
+
+- 요청: 완료 시 빌드 후 GitHub 업로드, Pull Shark 같은 프로필 업적도 최대 5개 범위에서 함께 확인/진행.
+- GitHub 공개 프로필 HTML에서 **Pull Shark와 Quickdraw가 이미 표시됨**을 확인함. 동일 배지를 별도의 5개 배지로 복제할 수 있는 것은 아니며 추가 PR은 누적 이력으로 남음. 신규 획득/등급 상승은 GitHub 표시 결과와 구분해 기록함.
+- 공식 [프로필 업적 문서](https://docs.github.com/en/account-and-profile/reference/profile-reference#earning-achievements)는 활동 이벤트에 따른 자동 표시와 공개 미리보기/변경 가능성을 설명함. 커뮤니티 안내의 상세 임계값은 확정된 공식 API 계약으로 간주하지 않음.
+- 저장소 공개/기본 main/현재 계정 Grokeen/PR 및 Release 없음 확인. GitHub에서 실제 빌드/다운로드를 제공하기 위해 Windows CI와 태그 Release 게시를 각각 독립된 PR로 진행하기로 함.
+- 첫 변경: `.github/workflows/build.yml`에서 PR/main의 Release 전체 빌드, 장치 없는 34개 테스트, 기존 스크립트의 ZIP 게시, 14일 아티팩트 업로드. 공식 action 릴리스의 실제 SHA를 확인해 고정하고 contents 읽기 권한만 사용함.
+- `global.json`으로 .NET 9 안정 SDK의 최신 feature band를 선택하게 함. README에 실제 Windows 빌드 상태 배지와 원격/실기 검증의 구분을 추가함.
+- 로컬 `dotnet build Bs2Cooler.sln -c Release` 경고 0/오류 0, 기존 테스트 34개, 게시 스크립트 성공 확인. 앱 소스/장치 설정은 변경하지 않음.
+- GitHub 연결 도구로 이슈 생성 요청은 **403 Resource not accessible by integration**으로 거부되어 이슈가 생성되지 않음. 기존 Git Credential Manager 인증을 메모리 안에서 사용한 공식 GitHub API로 진행하며 인증 사용자 Grokeen을 확인함. 토큰은 출력/파일/Git에 저장하지 않음.
+- 업적을 위해 다른 사람의 참여/공동 저자를 꾸미지 않으며 유료 후원이나 타인 저장소 변경은 하지 않음. 이번 저장소의 실제 빌드/배포 변경을 PR로 검증/병합한 사실과 프로필 표시만 확인함.
