@@ -396,3 +396,36 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - `Publish-App.ps1`에 상세 사용 문서와 assets 폴더를 포함하고 EXE 및 ZIP의 `RELEASE-SHA256SUMS.txt` 생성 추가. `Test-Package.ps1`로 필수 파일, 경로/중복, ZIP 내부 EXE와 EXE manifest 및 외부 EXE 일치를 검사함.
 - `docs/RELEASE-NOTES.ko.md`, `RELEASING.ko.md`에 사용자 다운로드/설치와 유지보수 절차 기록. `GITHUB-ACHIEVEMENTS.ko.md`에 요청 범위의 5종을 검토하고 보유/실행 가능/외부 참여 필요를 구분함. AGENTS에도 상시 요청을 반영함.
 - 최종 두 번째 PR과 태그 Release 실행/다운로드 검증 결과는 수행 후 추가함. 앱/실물 설정은 그대로 유지함.
+
+## 2026-10-16 02:53:33 KST — GitHub Release 게시/다운로드 검증 및 로그인 자동 팬 제어 활성화
+
+### GitHub 빌드와 실제 게시
+
+- [PR #2](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/2), 작성 Grokeen, 소스 `89d47089d7fbd6c93627735326be7493143a659c`. [PR 빌드 38780519436](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38780519436) **success** 후 병합함.
+- PR #2 병합 커밋 **`c39ea9e92c5aaa0a1b400bb61186ae372367a486`**을 main으로 동기화하고 동일 커밋에 **`v0.4.0`** 태그를 올림. 강제 푸시/기존 태그 재작성 없음.
+- [Windows release 실행 38780774290](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38780774290) **success**. 태그 검사/Release 빌드/테스트/ZIP 구성·해시 검사/업로드/실제 GitHub Release 게시 전 단계 통과.
+- 원격 작업 로그에서도 **Build succeeded / 0 Warning(s) / 0 Error(s) / 34 tests PASS**를 직접 확인함.
+- [GitHub Release v0.4.0](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.0), 공개 게시 시각 **2026-10-16 02:52:47 KST**. Draft false, Prerelease false.
+- 공개 자산 **`Bs2Cooler-win-x64.zip`(397,495바이트)**과 **`RELEASE-SHA256SUMS.txt`(170바이트)** 게시 확인.
+- GitHub의 공개 다운로드 URL에서 두 파일을 다시 내려받아 다음을 직접 검증함.
+  - ZIP SHA-256 **`B67002507F3E1F01A1585D8AFA2C1730B1B5B8167AAEC581AB2D5A97325F41AB`**: 동봉 검증 파일과 일치.
+  - ZIP 내부 EXE SHA-256 **`F7CD0396EA99FE2865E7D11701E61B0271015BD6434E5FC877B93BCC65C50B45`**: 외부 Release 검증 파일과 내부 `SHA256SUMS.txt` 모두 일치.
+  - EXE **453,613바이트**, 제품 버전 **`0.4.0+c39ea9e92c5aaa0a1b400bb61186ae372367a486`**, ZIP 항목 23개.
+- 이번 GitHub 빌드 EXE와 이전 PC 설치 EXE는 소스 커밋/빌드 환경이 달라 해시가 다름. **설치 EXE는 앞 기록의 `ECE3D00...`이며 자동 교체하지 않음**. 앱 기능 소스는 변경하지 않았고 빌드/패키지/배포 구성만 추가함. 각 출처의 해시를 혼동하지 않도록 구분함.
+- 다운로드 검증 파일은 `.analysis/github-release-v0.4.0`에 로컬 보관하고 Git에는 올리지 않음. 배포 ZIP은 GitHub Release 자산으로 제공하며 원시 분석/사용자 설정/드라이버 설치 파일은 포함하지 않음.
+
+### 사용자 추가 응답에 따른 자동 제어 시작 설정
+
+- 사용자가 이전 선택 질문에 **CPU/GPU 온도 자동 제어도 시작**으로 응답함. 앞 기록의 '응답 없어 Off 유지'는 당시 상태이며 이 응답으로 On으로 변경함.
+- 설치 EXE의 `--startup-cooling=on --background`으로 로컬 설정을 저장하고 기존 앱을 정상 종료한 뒤 **같은 로그인 예약 작업을 다시 실행**함. 이 검증은 실제 재부팅과 구분함.
+- 저장 값 **AutoStartCooling true / CPU·GPU 기준** 확인. 초기화 후 **창 숨김/관리자/트레이/연결됨/Automatic true**, CPU **71°C** / GPU **54°C**, 장치 목표 **2700 RPM**으로 진입함. 즉시 실제 RPM은 상승 중 1500으로 읽혔으며 그 시점의 목표와 실제 회전수를 구분함.
+- 기존 4단계 저장 속도 **1400,2400,2700,2700**, RGB/단계등 Off 유지. 현재 자동 제어를 켠 상태로 남겨 두었으며 완전 종료하면 자동 시작 전 목표 1400 RPM으로 복원하는 기존 동작을 사용함.
+- 다음 로그인에도 선택한 CPU/GPU 센서와 USB가 준비되면 자동 제어를 시작함. 사용자 선택은 로컬 JSON에만 보존하며 GitHub 배포본의 기본값(앱만 시작)은 그대로 유지함.
+
+### 프로필 업적 확인 결과
+
+- 요청 범위에서 **Pull Shark / Quickdraw / YOLO / Pair Extraordinaire / Starstruck**의 5종을 검토하고 [별도 확인표](GITHUB-ACHIEVEMENTS.ko.md)에 기록함.
+- 시작 전과 이 시각의 실제 GitHub 프로필 HTML을 모두 확인했으며 **Pull Shark와 Quickdraw는 이미 보유하고 계속 표시됨**.
+- 실제 빌드/배포 PR #1/#2를 작성/검증/병합했으며 정식 리뷰 요청 없이 병합한 이력도 있으나, **YOLO를 포함한 신규 배지나 등급 상승은 현재 표시로 확인되지 않음**. GitHub 자동 부여를 성공한 것으로 기록하지 않음.
+- 공동 작성자가 없는 Pair Extraordinaire와 타인의 별이 필요한 Starstruck을 대신 꾸미지 않음. 빈 PR/중복 변경/공동 저자 허위 지정은 수행하지 않음. 최대 5종 확인 요청과 신규 5개 획득은 구분함.
+- 최종 보고서/상태 확인표는 후속 문서 PR로 검증 후 main에 반영함. 최종 결과 문서 커밋은 배포 태그의 앱/ZIP을 변경하지 않음.
