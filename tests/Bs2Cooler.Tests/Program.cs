@@ -58,7 +58,7 @@ var thermalNow = DateTimeOffset.UtcNow;
 TemperatureReading Reading(double value, int age = 0) => new(value, "test fixture", thermalNow.AddSeconds(-age));
 TemperatureSnapshot Sample(double? cpu, double? gpu) => new(cpu.HasValue ? Reading(cpu.Value) : null, gpu.HasValue ? Reading(gpu.Value) : null, "test", "test");
 CoolingDecision Decide(ThermalControl control, double? cpu, double? gpu, int max = 2700, TemperatureScope scope = TemperatureScope.GpuOnly, CoolingPreset preset = CoolingPreset.Performance) => control.Evaluate(Sample(cpu, gpu), scope, preset, max, thermalNow);
-Run("Auto uses higher CPU/GPU temperature", () => Equal(3500, Decide(new(), 80, 45, 4000, TemperatureScope.CpuAndGpu).Rpm));
+Run("Auto uses higher CPU/GPU temperature", () => Equal(4000, Decide(new(), 80, 45, 4000, TemperatureScope.CpuAndGpu).Rpm));
 Run("GPU-only scope does not invent a CPU reading", () => Equal(1700, Decide(new(), null, 45).Rpm));
 Run("Missing required CPU enters maximum-RPM fail-safe", () =>
 {
@@ -87,10 +87,10 @@ Run("Power supply caps every automatic curve", () =>
 Run("Cooling hysteresis avoids threshold chatter", () =>
 {
     var control = new ThermalControl();
-    Equal(2700, Decide(control, null, 70).Rpm);
-    Equal(2700, Decide(control, null, 69).Rpm);
-    Equal(2700, Decide(control, null, 68).Rpm);
-    Equal(2400, Decide(control, null, 67).Rpm);
+    Equal(2100, Decide(control, null, 50).Rpm);
+    Equal(2100, Decide(control, null, 49).Rpm);
+    Equal(2100, Decide(control, null, 48).Rpm);
+    Equal(1700, Decide(control, null, 47).Rpm);
 });
 Run("Heating response is immediate", () =>
 {
@@ -102,7 +102,47 @@ Run("Critical temperature has recovery hysteresis", () =>
     var control = new ThermalControl();
     Equal(4000, Decide(control, null, 90, 4000, preset: CoolingPreset.Quiet).Rpm);
     Equal(4000, Decide(control, null, 88, 4000, preset: CoolingPreset.Quiet).Rpm);
-    Equal(3000, Decide(control, null, 86, 4000, preset: CoolingPreset.Quiet).Rpm);
+    var recovered = Decide(control, null, 86, 4000, preset: CoolingPreset.Quiet);
+    Equal(4000, recovered.Rpm); Equal(false, recovered.Description.Contains("90°C"));
+});
+Run("70 C goal preemptively uses every supply maximum for both profiles", () =>
+{
+    foreach (int maximum in new[] { 2700, 3300, 4000 })
+        foreach (var preset in Enum.GetValues<CoolingPreset>())
+            foreach (double temperature in new[] { 60d, 65, 70, 70.1, 89, 100 })
+                Equal(maximum, Decide(new(), null, temperature, maximum, preset: preset).Rpm);
+});
+Run("Either CPU or GPU reaching the headroom threshold requests full cooling", () =>
+{
+    Equal(3300, Decide(new(), 60, 42, 3300, TemperatureScope.CpuAndGpu).Rpm);
+    Equal(3300, Decide(new(), 42, 60, 3300, TemperatureScope.CpuAndGpu).Rpm);
+});
+Run("Target maximum remains latched until strictly below 57 C", () =>
+{
+    var control = new ThermalControl();
+    Equal(4000, Decide(control, null, 60, 4000, preset: CoolingPreset.Quiet).Rpm);
+    Equal(4000, Decide(control, null, 59.9, 4000, preset: CoolingPreset.Quiet).Rpm);
+    Equal(4000, Decide(control, null, 57, 4000, preset: CoolingPreset.Quiet).Rpm);
+    Equal(1700, Decide(control, null, 56.9, 4000, preset: CoolingPreset.Quiet).Rpm);
+});
+Run("Target reports preemptive, reached and exceeded conditions separately", () =>
+{
+    Equal(true, Decide(new(), null, 65).Description.Contains("선제"));
+    Equal(true, Decide(new(), null, 70).Description.Contains("도달"));
+    var exceeded = Decide(new(), null, 70.1);
+    Equal(true, exceeded.Description.Contains("초과")); Equal(false, exceeded.FailSafe); Equal<double?>(70.1, exceeded.Temperature);
+});
+Run("Reset removes the target-cooling latch", () =>
+{
+    var control = new ThermalControl(); Decide(control, null, 60, 4000, preset: CoolingPreset.Quiet);
+    control.Reset();
+    Equal(1700, Decide(control, null, 59, 4000, preset: CoolingPreset.Quiet).Rpm);
+});
+Run("Sensor failure still takes priority after target cooling was active", () =>
+{
+    var control = new ThermalControl(); Decide(control, 65, 40, 3300, TemperatureScope.CpuAndGpu);
+    var missing = Decide(control, null, 40, 3300, TemperatureScope.CpuAndGpu);
+    Equal(true, missing.FailSafe); Equal(3300, missing.Rpm); Equal<double?>(null, missing.Temperature);
 });
 Run("Quiet and performance profiles differ", () =>
 {

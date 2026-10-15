@@ -43,6 +43,23 @@ internal static class Program
                 if (!tray.Contains("CPU " + cpuTemperature) || !tray.Contains("GPU " + temperature))
                     throw new Exception("Tray summary does not show the live CPU/GPU temperatures.");
                 Console.WriteLine("PASS: live temperature header, sensor panel and tray summary agree: " + summary);
+                if (!summary.Contains("목표 70°C") || !tray.Contains("목표 70°C"))
+                    throw new Exception("The requested 70 C target is missing from the header or tray.");
+                if (args.Contains("--target-70"))
+                {
+                    var field = typeof(Bs2Cooler.App.MainWindow).GetField("_temperatures", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+                    var update = typeof(Bs2Cooler.App.MainWindow).GetMethod("UpdateTemperatureDisplay", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+                    var original = (TemperatureSnapshot)field.GetValue(window)!;
+                    try
+                    {
+                        var fixture = new TemperatureSnapshot(new(73, "UI fixture", DateTimeOffset.Now), new(45, "UI fixture", DateTimeOffset.Now), "UI fixture", "UI fixture");
+                        field.SetValue(window, fixture); update.Invoke(window, null);
+                        string warning = ((TextBlock)window.FindName("SensorDescription")).Text;
+                        if (!warning.Contains("70°C 목표 초과")) throw new Exception("Above-target temperature warning is missing.");
+                        Console.WriteLine("PASS: simulated 73 C CPU shows target-exceeded warning without heating hardware.");
+                    }
+                    finally { field.SetValue(window, original); update.Invoke(window, null); }
+                }
                 if (args.Contains("--expect-elevation"))
                 {
                     if (((Button)window.FindName("CpuPermissionButton")).Visibility != Visibility.Visible)

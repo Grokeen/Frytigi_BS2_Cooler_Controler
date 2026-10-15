@@ -7,7 +7,7 @@
     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
     <Grid>
       <StackPanel><TextBlock Text="BS2 Cooler" FontSize="28" FontWeight="SemiBold" />
-        <TextBlock x:Name="TemperatureSummary" Text="CPU — · GPU — · 2초 갱신" Foreground="#8BE5CA" Margin="0,5,0,0" AutomationProperties.Name="CPU 및 GPU 현재 온도" /></StackPanel>
+        <TextBlock x:Name="TemperatureSummary" Text="CPU — · GPU — · 목표 70°C" Foreground="#8BE5CA" Margin="0,5,0,0" AutomationProperties.Name="CPU 및 GPU 현재 온도와 목표" /></StackPanel>
       <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#1C3040" CornerRadius="14" Padding="13,7">
         <TextBlock x:Name="ConnectionBadge" Text="연결 확인 중" Foreground="#75DBBF" />
       </Border>
@@ -64,7 +64,7 @@
             </ComboBox>
             <TextBlock x:Name="AutoState" Text="온도 센서를 확인하고 있습니다." TextWrapping="Wrap" Foreground="#8BE5CA" Margin="0,20,0,0" MinHeight="42" />
             <Button x:Name="AutoButton" Content="자동 제어 시작" Click="OnAutomaticClick" Background="#55CBB0" Foreground="#082D27" FontWeight="Bold" Margin="0,12,0,0" />
-            <TextBlock Text="90°C 이상 또는 센서 이상 시 최대 풍량. 중지하면 이전 설정을 복원합니다." Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0" />
+            <TextBlock Text="70°C 목표 · 60°C부터 최대 풍량, 57°C 미만에서 해제. 냉각 한계로 목표를 넘을 수 있습니다. 중지하면 이전 설정을 복원합니다." Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0" />
           </StackPanel></TabItem>
         </TabControl>
       </Border>

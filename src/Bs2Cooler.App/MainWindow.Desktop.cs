@@ -101,6 +101,6 @@ public partial class MainWindow
     public string TraySummary()
     {
         var temperatures = TemperatureLabels();
-        return $"BS2 Cooler · CPU {temperatures.Cpu} / GPU {temperatures.Gpu}\n{(_automatic ? "자동 제어" : _startupAutomaticPending ? "자동 제어 대기" : "수동 모드")} · {_status?.Speed.TargetRpm ?? 0} RPM";
+        return $"CPU {temperatures.Cpu} / GPU {temperatures.Gpu} · 목표 70°C\n{(_automatic ? "자동 제어" : _startupAutomaticPending ? "자동 제어 대기" : "수동 모드")} · {_status?.Speed.TargetRpm ?? 0} RPM";
     }
 }
