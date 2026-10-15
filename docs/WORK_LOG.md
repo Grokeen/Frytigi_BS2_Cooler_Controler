@@ -441,3 +441,20 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - `.analysis/temperature-ui-preview.png`를 열어 상단과 오른쪽 CPU/GPU 값, °C, 한국어 글자와 버튼 배치를 직접 확인함. 트레이 메뉴는 구현과 실행 상태 확인 대상이며 실제 Windows 메뉴 픽셀 캡처는 수행하지 않음.
 - UI 시험을 위해 기존 자동 앱을 정상 종료하고 시험 후 같은 예약 작업으로 다시 시작함. 사용자 선택 **AutoStartCooling On/CPU·GPU 기준**을 유지함.
 - 실물/화면 검증 로그와 PNG는 `.analysis/`에만 보관함. 실제 GitHub PR/0.4.1 게시, 최종 설치/해시 결과는 수행 후 추가함.
+
+## 2026-10-16 03:07:22 KST — 온도 표시 0.4.1 GitHub 게시·최종 설치 확인
+
+- [PR #4](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/4): 온도 표시 개선 커밋 `5cf780b8ead89f98a9842e3ed175f0e43ef8bc45`, 센서 조회 대기 중에도 UI 타이머가 만료 표시를 갱신하는 보완 커밋 `e6ad2c8d5a2987fcebcd1c531d8c7e06467b3dbc`.
+- 초기 헤드와 최종 헤드의 GitHub 빌드 모두 success. [최종 PR 빌드 38782280534](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38782280534) 확인 후 예상 head SHA를 지정해 병합함.
+- 병합/배포 소스 **`83c7101b725ab6605fc030783440b507e8f6d7e5`**, 새 태그 **v0.4.1**. 기존 v0.4.0 태그/자산은 그대로 보존함.
+- [Windows release 38782553137](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38782553137) success. 원격 로그에서 **빌드 경고 0/오류 0, 테스트 34개, 패키지 검사 통과**를 확인함.
+- [GitHub Release v0.4.1](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/releases/tag/v0.4.1) 실제 게시 시각 **2026-10-16 03:05:56 KST**. 공개 ZIP과 검증 파일을 다시 내려받아 ZIP/내부 EXE 해시를 검증함.
+- GitHub ZIP **398,433바이트**, SHA-256 **`B784349CB1568470E0E0B0A2A65F477E752CB471B56C970081ADB84E06661B61`**.
+- GitHub 내부 EXE **457,709바이트**, SHA-256 **`607512265AB04C16931CBCCCB9852086077FAC831CA7E044B17D423C6B76B9E7`**. 외부 Release manifest와 ZIP 내부 EXE manifest에 모두 일치함. 제품 버전 **`0.4.1+83c7101b725ab6605fc030783440b507e8f6d7e5`**.
+- 같은 최종 소스를 로컬에서 게시/검사한 뒤 `Install-Desktop.ps1 -StartupCooling Preserve` 관리자 설치 exit 0 확인. 설치 EXE **457,704바이트**, SHA-256 **`A8EB6C53F255D9D1B0129C5C8D60FBB3DFBFD06B0F46878C774290D6DD965548`**. 로컬 배포 사본과 설치 사본 일치, 제품 버전/소스 커밋도 위 최종 소스와 일치함.
+- 로컬/원격 빌드 환경에 따른 파일 해시 차이를 구분함. 이 PC의 설치본은 로컬 게시 결과이며 GitHub에서 받은 EXE로 자동 교체하지 않음.
+- 현재 설치 앱을 창 열기로 표시함. **Visible true / Connected true / Automatic true / Elevated true / Initialized true / Tray true**, CPU **57°C**, GPU **45°C** 확인. 상단과 오른쪽에 온도가 표시되며 숨긴 뒤에는 트레이 메뉴/도움말에서도 볼 수 있음.
+- 로컬 설정 **AutoStartCooling true / CPU·GPU 기준** 유지. 설치/검증 동안 기존 앱을 정상 종료하고 같은 작업으로 다시 시작했으며 RGB/단계 표시등/4단계 저장 속도를 바꾸지 않음.
+- 센서 장기 지연 자체를 실물에서 강제로 발생시킨 시험은 수행하지 않았으며, 표시 갱신과 기존 만료 검사 재사용은 코드로 확인함. 실물 UI 검증과 이 예외 조건을 구분함.
+- GitHub 프로필에는 기존 Pull Shark/Quickdraw 두 종류가 계속 표시됨. 새로운 업적 획득으로 기록하지 않음. 실제 온도 개선 PR을 병합했고 결과 보고서는 별도 문서 PR로 검증 후 main에 반영함.
+- 다운로드 검증 자료/원시 로그/렌더링은 `.analysis/`에만 보관함. 원격에 올린 파일은 앱 소스/테스트 도구/문서/보고서이며 EXE·ZIP은 GitHub Release에 게시함.
