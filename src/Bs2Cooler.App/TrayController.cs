@@ -19,6 +19,11 @@ internal sealed class TrayController : IDisposable
         _image = (Drawing.Icon)source.Clone();
         _icon = new Forms.NotifyIcon { Icon = _image, Text = "BS2 Cooler", ContextMenuStrip = _menu, Visible = true };
         _icon.DoubleClick += (_, _) => window.ShowControlWindow();
+        var cpuTemperature = new Forms.ToolStripMenuItem("CPU 온도: —") { Enabled = false };
+        var gpuTemperature = new Forms.ToolStripMenuItem("GPU 온도: —") { Enabled = false };
+        _menu.Items.Add(cpuTemperature);
+        _menu.Items.Add(gpuTemperature);
+        _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("창 열기", null, (_, _) => window.ShowControlWindow());
         var automatic = new Forms.ToolStripMenuItem("온도 자동 제어 시작");
         automatic.Click += async (_, _) => await window.ToggleAutomaticFromTrayAsync();
@@ -42,11 +47,21 @@ internal sealed class TrayController : IDisposable
         _menu.Items.Add("종료 · 기존 팬 설정 복원", null, async (_, _) => await window.RequestExitAsync());
         _menu.Opening += (_, _) =>
         {
+            RefreshTemperatures();
             automatic.Text = window.AutomaticActive ? "온도 자동 제어 중지" : "온도 자동 제어 시작";
             autoOnStartup.Checked = window.StartupCoolingEnabled;
             try { startup.Checked = StartupTaskManager.IsEnabled(); } catch { startup.Checked = false; }
         };
-        _timer.Tick += (_, _) => { string text = window.TraySummary(); _icon.Text = text.Length > 63 ? text[..63] : text; };
+        void RefreshTemperatures()
+        {
+            var temperatures = window.TemperatureLabels();
+            cpuTemperature.Text = "CPU 온도: " + temperatures.Cpu;
+            gpuTemperature.Text = "GPU 온도: " + temperatures.Gpu;
+            string text = window.TraySummary();
+            _icon.Text = text.Length > 63 ? text[..63] : text;
+        }
+        _timer.Tick += (_, _) => RefreshTemperatures();
+        RefreshTemperatures();
         _timer.Start();
     }
     public void Dispose() { _timer.Stop(); _icon.Visible = false; _icon.Dispose(); _menu.Dispose(); _image.Dispose(); }

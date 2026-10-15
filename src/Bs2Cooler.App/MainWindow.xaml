@@ -7,7 +7,7 @@
     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
     <Grid>
       <StackPanel><TextBlock Text="BS2 Cooler" FontSize="28" FontWeight="SemiBold" />
-        <TextBlock Text="BS2 Pro 쿨러 전용 컨트롤" Foreground="{StaticResource Muted}" Margin="0,5,0,0" /></StackPanel>
+        <TextBlock x:Name="TemperatureSummary" Text="CPU — · GPU — · 2초 갱신" Foreground="#8BE5CA" Margin="0,5,0,0" AutomationProperties.Name="CPU 및 GPU 현재 온도" /></StackPanel>
       <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#1C3040" CornerRadius="14" Padding="13,7">
         <TextBlock x:Name="ConnectionBadge" Text="연결 확인 중" Foreground="#75DBBF" />
       </Border>

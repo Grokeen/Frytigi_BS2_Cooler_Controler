@@ -36,6 +36,13 @@ internal static class Program
                 string cpuTemperature = ((TextBlock)window.FindName("CpuTemperature")).Text;
                 if (cpuGpu && !cpuTemperature.Contains("°C")) throw new Exception("Live CPU temperature was not displayed.");
                 Console.WriteLine("CPU temperature: " + cpuTemperature);
+                string summary = ((TextBlock)window.FindName("TemperatureSummary")).Text;
+                if (!summary.Contains("CPU " + cpuTemperature) || !summary.Contains("GPU " + temperature))
+                    throw new Exception("Header does not show the same live CPU/GPU temperatures as the sensor panel.");
+                string tray = window.TraySummary();
+                if (!tray.Contains("CPU " + cpuTemperature) || !tray.Contains("GPU " + temperature))
+                    throw new Exception("Tray summary does not show the live CPU/GPU temperatures.");
+                Console.WriteLine("PASS: live temperature header, sensor panel and tray summary agree: " + summary);
                 if (args.Contains("--expect-elevation"))
                 {
                     if (((Button)window.FindName("CpuPermissionButton")).Visibility != Visibility.Visible)
