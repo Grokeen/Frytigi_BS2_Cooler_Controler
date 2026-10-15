@@ -1,0 +1,59 @@
+name: Windows release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 9.0.x
+      - name: Check tag matches application version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          [xml]$project = Get-Content -LiteralPath src/Bs2Cooler.App/Bs2Cooler.App.csproj -Raw
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ($env:RELEASE_TAG -ne ('v' + $version)) { throw 'Release tag must match the application version.' }
+      - name: Build Release solution
+        run: dotnet build Bs2Cooler.sln -c Release
+      - name: Run protocol, thermal and RGB tests
+        run: dotnet run --project tests/Bs2Cooler.Tests -c Release --no-build
+      - name: Publish Windows package
+        run: ./tools/Publish-App.ps1
+      - name: Upload verified package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Bs2Cooler-release-${{ github.ref_name }}
+          path: |
+            artifacts/Bs2Cooler-win-x64.zip
+            artifacts/RELEASE-SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create $env:RELEASE_TAG artifacts/Bs2Cooler-win-x64.zip artifacts/RELEASE-SHA256SUMS.txt --verify-tag --title "BS2 Cooler $env:RELEASE_TAG" --notes-file docs/RELEASE-NOTES.ko.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed; existing assets are never overwritten automatically.' }

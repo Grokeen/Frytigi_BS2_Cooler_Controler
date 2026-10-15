@@ -385,3 +385,14 @@ USB 연결이 끊기면 자동 제어를 중지하고 재연결 후에는 사용
 - 로컬 `dotnet build Bs2Cooler.sln -c Release` 경고 0/오류 0, 기존 테스트 34개, 게시 스크립트 성공 확인. 앱 소스/장치 설정은 변경하지 않음.
 - GitHub 연결 도구로 이슈 생성 요청은 **403 Resource not accessible by integration**으로 거부되어 이슈가 생성되지 않음. 기존 Git Credential Manager 인증을 메모리 안에서 사용한 공식 GitHub API로 진행하며 인증 사용자 Grokeen을 확인함. 토큰은 출력/파일/Git에 저장하지 않음.
 - 업적을 위해 다른 사람의 참여/공동 저자를 꾸미지 않으며 유료 후원이나 타인 저장소 변경은 하지 않음. 이번 저장소의 실제 빌드/배포 변경을 PR로 검증/병합한 사실과 프로필 표시만 확인함.
+
+## 2026-10-16 02:47:25 KST — 첫 GitHub 빌드 성공/PR 병합 및 Release 자동화 구현
+
+- [PR #1](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/pull/1), 작성 계정 Grokeen, 소스 `ae66b8593165bf6c3046e12a4225db83c8a7db5b`.
+- [GitHub Windows build 실행 38779877010](https://github.com/Grokeen/Frytigi_BS2_Cooler_Controler/actions/runs/38779877010): **success**. Release 전체 빌드/34개 테스트/ZIP 게시/아티팩트 업로드 모든 단계 통과. 아티팩트 `Bs2Cooler-win-x64` 생성 확인.
+- 코드/CI 검토 후 예상 head SHA를 지정해 PR #1을 병합함. 병합 커밋 **`ca0a374f23bffec6bcc37e552cf31f01ec9e554e`**, 실제 병합 시각 `2026-10-16 02:47:23 KST`.
+- 초기 API JSON에 PowerShell UTF-8 BOM이 포함되어 PR 생성 400 오류가 발생함. BOM을 제거한 UTF-8 본문으로 수정 후 PR #1 생성 성공. 실패 요청으로 PR/이슈가 중복 생성되지 않음.
+- 두 번째 실제 변경: 버전 태그/앱 버전 일치 검사, GitHub Windows 빌드/테스트/게시, 태그 작업에만 contents 쓰기 권한과 기본 GITHUB_TOKEN으로 Release 생성. 기존 자산 자동 덮어쓰기는 하지 않음.
+- `Publish-App.ps1`에 상세 사용 문서와 assets 폴더를 포함하고 EXE 및 ZIP의 `RELEASE-SHA256SUMS.txt` 생성 추가. `Test-Package.ps1`로 필수 파일, 경로/중복, ZIP 내부 EXE와 EXE manifest 및 외부 EXE 일치를 검사함.
+- `docs/RELEASE-NOTES.ko.md`, `RELEASING.ko.md`에 사용자 다운로드/설치와 유지보수 절차 기록. `GITHUB-ACHIEVEMENTS.ko.md`에 요청 범위의 5종을 검토하고 보유/실행 가능/외부 참여 필요를 구분함. AGENTS에도 상시 요청을 반영함.
+- 최종 두 번째 PR과 태그 Release 실행/다운로드 검증 결과는 수행 후 추가함. 앱/실물 설정은 그대로 유지함.
